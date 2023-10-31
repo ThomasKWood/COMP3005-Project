@@ -1,0 +1,38 @@
+-- DROP DATABASE fitness_app;
+
+-- -- Create the database
+-- CREATE DATABASE fitness_app;
+
+-- Create User table
+CREATE TABLE IF NOT EXISTS "user" (
+    id SERIAL,
+    email VARCHAR(255) NOT NULL,
+    password CHAR(64) NOT NULL,
+    fName VARCHAR(255) NOT NULL,
+    lName VARCHAR(255) NOT NULL,
+    admin BOOLEAN DEFAULT FALSE,
+    joinDate DATE DEFAULT CURRENT_DATE,
+    accountInfo JSON,
+    goals JSON,
+    points INT DEFAULT 0,
+    PRIMARY KEY (id, email)
+);
+
+CREATE TABLE IF NOT EXISTS exercise (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    info JSON,
+    link VARCHAR(255)
+);
+
+-- Insert Testing Data
+DELETE FROM "user";
+INSERT INTO "user" (email, password, fName, lName, admin, accountInfo, goals, points)
+VALUES
+    ('user1@example.com', 'password1hash', 'John', 'Doe', true, '{"height": 175,"weight": 70,"dateOfBirth": "1990-01-15"}', '{"goals": [{"name": "Goal 1","value": 100,"completed": true},{"name": "Goal 2","value": 200,"completed": false},{"name": "Goal 3","value": 150,"completed": true}]}', 100),
+    ('user2@example.com', 'password2hash', 'Jane', 'Smith', false, '{"height": 180, "weight": 75, "dateOfBirth": "1995-05-20"}', '{"goals": [{"name": "New Year Resolution", "value": 50, "completed": false}, {"name": "Fitness Milestone", "value": 300, "completed": true}, {"name": "Personal Achievement", "value": 120, "completed": false}]}', 50),
+    ('user3@example.com', 'password3hash', 'Bob', 'Johnson', false, '{"height": 185, "weight": 80, "dateOfBirth": "1985-03-10"}', '{"goals": [{"name": "Goal 1", "value": 75, "completed": true}, {"name": "Goal 2", "value": 250, "completed": false}, {"name": "Goal 3", "value": 180, "completed": true}]}', 75);
+
+DELETE FROM exercise;
+INSERT INTO exercise (id, name, info, link) VALUES
+    (1, 'Barbell Close Grip Press', '{"steps": ["Steps :", "1.) Start by sitting up straight on the end of a flat bench with feet in front of you, while holding a weighted barbell on your knees.", "2.) Elevate the bar overhead and this will be your starting position.", "3.) Slowly lower the bar behind your head, until you feel a stretch, squeeze your triceps, and hold for a count.", "4.) Return back to the starting position."], "muscles": ["Triceps"]}', 'https://cdn.jefit.com/assets/img/exercises/gifs/1165.gif');
