@@ -1,10 +1,10 @@
--- DROP DATABASE fitness_app;
+-- DROP TABLES
+DROP TABLE "user";
+DROP TABLE exercise;
 
--- -- Create the database
--- CREATE DATABASE fitness_app;
-
+-- CREATE TABLES
 -- Create User table
-CREATE TABLE IF NOT EXISTS "user" (
+CREATE TABLE "user" (
     id SERIAL,
     email VARCHAR(255) NOT NULL,
     password CHAR(64) NOT NULL,
@@ -18,20 +18,23 @@ CREATE TABLE IF NOT EXISTS "user" (
     PRIMARY KEY (id, email)
 );
 
-CREATE TABLE IF NOT EXISTS exercise (
+CREATE TABLE exercise (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255),
     info JSON,
     link VARCHAR(255)
 );
 
--- Insert Testing Data
+-- INSERT DATA
 DELETE FROM "user";
 INSERT INTO "user" (email, password, fName, lName, admin, accountInfo, goals, points)
 VALUES
     ('user1@example.com', 'password1hash', 'John', 'Doe', true, '{"height": 175,"weight": 70,"dateOfBirth": "1990-01-15"}', '{"goals": [{"name": "Goal 1","value": 100,"completed": true},{"name": "Goal 2","value": 200,"completed": false},{"name": "Goal 3","value": 150,"completed": true}]}', 100),
-    ('user2@example.com', 'password2hash', 'Jane', 'Smith', false, '{"height": 180, "weight": 75, "dateOfBirth": "1995-05-20"}', '{"goals": [{"name": "New Year Resolution", "value": 50, "completed": false}, {"name": "Fitness Milestone", "value": 300, "completed": true}, {"name": "Personal Achievement", "value": 120, "completed": false}]}', 50),
-    ('user3@example.com', 'password3hash', 'Bob', 'Johnson', false, '{"height": 185, "weight": 80, "dateOfBirth": "1985-03-10"}', '{"goals": [{"name": "Goal 1", "value": 75, "completed": true}, {"name": "Goal 2", "value": 250, "completed": false}, {"name": "Goal 3", "value": 180, "completed": true}]}', 75);
+    ('user2@example.com', 'password2hash', 'Jane', 'Smith', false, '{"height": 180, "weight": 75, "dateOfBirth": "1995-05-20"}', '{"goals": [{"name": "New Year Resolution", "value": 50, "completed": false}, {"name": "Fitness Milestone", "value": 300, "completed": true}, {"name": "Personal Achievement", "value": 120, "completed": false}]}', 50);
+
+
+INSERT INTO "user" (email, password, fName, lName)
+    VALUES ('user3@example.com', 'password3hash', 'Bob', 'Johnson');
 
 DELETE FROM exercise;
 INSERT INTO exercise (id, name, info, link) VALUES
