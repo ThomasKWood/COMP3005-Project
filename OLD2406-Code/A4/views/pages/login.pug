@@ -1,0 +1,21 @@
+html
+    head
+        style
+            include ../../public/stylesheet.css
+        script
+            include ../../public/js/login.js
+        title Login
+body
+    h1 User Login:
+    br
+    br
+    div#main
+        p Username:
+            br
+            input(id="username-input", type="username", name="name", placeholder="username")
+        p Password:
+            br
+            input(id="password-input", type="password", name="pass", placeholder="password")
+        br
+        div(class="login", onclick="login()") Login
+    include ../partials/loggedout

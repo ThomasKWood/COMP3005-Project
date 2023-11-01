@@ -1,0 +1,13 @@
+html
+    head
+        style
+            include ../../public/stylesheet.css
+        title Home
+    body
+    h2(class="welcome") Welcome! To get started Login if you havent already. If you do not have an account you can register a new account.
+    if loggedin
+        include ../partials/loggedin
+    else
+        include ../partials/loggedout
+    script
+        include ../../public/js/home.js

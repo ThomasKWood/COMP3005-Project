@@ -1,0 +1,27 @@
+html
+    head
+        style
+            include ../../public/stylesheet.css
+        title Order Summary
+body
+    h1 Order: #{order._id}
+    br
+    br
+    h4 Order Details:
+    div
+        p Ordered By: #{order.user}
+        p Restaurant: #{order.info.restaurantName}
+        br
+        h4 Reciept:
+        p Subtotal: $#{order.info.subtotal}
+        p Tax: $#{order.info.tax}
+        p Delivery fee: $#{order.info.fee}
+        p Total: $#{order.info.total}
+        br
+        h4 Order:
+        each item in order.info.order
+            p #{item.quantity} x #{item.name}
+    if loggedin
+        include ../partials/loggedin
+    else
+        include ../partials/loggedout

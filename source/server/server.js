@@ -42,3 +42,5 @@ app.use(function(req, res, next){
 });
 
 // ------------ROUTES------------
+// -------GETS
+// Home
