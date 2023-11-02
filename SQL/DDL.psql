@@ -1,8 +1,13 @@
 -- DROP TABLES
 DROP TABLE IF EXISTS exerciseAdded;
 DROP TABLE IF EXISTS exercise;
-DROP TABLE IF EXISTS transaction;
+DROP TABLE IF EXISTS ticket;
+DROP TABLE IF EXISTS rsvpActivities;
+DROP TABLE IF EXISTS event;
+DROP TABLE IF EXISTS payment;
+DROP TABLE IF EXISTS "transaction";
 DROP TABLE IF EXISTS "user";
+
 
 -- CREATE TABLES
 -- Create User table
@@ -46,13 +51,50 @@ CREATE TABLE "transaction" (
     paid BOOLEAN
 );
 
+CREATE TABLE ticket (
+    id SERIAL PRIMARY KEY,
+    subject VARCHAR(255),
+    description TEXT
+);
+
+CREATE TABLE event (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    info TEXT,
+    "when" DATE
+);
+
+CREATE TABLE rsvpActivities (
+    aid INT,
+    uid INT,
+    PRIMARY KEY (aid, uid),
+    FOREIGN KEY (aid) REFERENCES public.event(id),
+    FOREIGN KEY (uid) REFERENCES public.user(id)
+);
+
+CREATE TABLE payment (
+    uid INT PRIMARY KEY,
+    type VARCHAR(255),
+    cardNum VARCHAR(16),
+    expiryYear INT,
+    expiryMonth INT,
+    cvc INT,
+    name VARCHAR(255),
+    FOREIGN KEY (uid) REFERENCES public.user(id)
+);
+
 -- INSERT DATA
+-- Admin
+INSERT INTO "user" (id, email, password, fName, lName, admin)
+VALUES (0, 'su', 'password', 'Super', 'User', true);
+
+-- Regular Users
 INSERT INTO "user" (email, password, fName, lName, admin, accountInfo, goals, points)
 VALUES
     ('user1@example.com', 'password1hash', 'John', 'Doe', false, '{"height": 175,"weight": 70,"dateOfBirth": "1990-01-15"}', '{"goals": [{"name": "Goal 1","value": 100,"completed": true},{"name": "Goal 2","value": 200,"completed": false},{"name": "Goal 3","value": 150,"completed": true}]}', 100),
     ('user2@example.com', 'password2hash', 'Jane', 'Smith', false, '{"height": 180, "weight": 75, "dateOfBirth": "1995-05-20"}', '{"goals": [{"name": "New Year Resolution", "value": 50, "completed": false}, {"name": "Fitness Milestone", "value": 300, "completed": true}, {"name": "Personal Achievement", "value": 120, "completed": false}]}', 50);
 INSERT INTO "user" (email, password, fName, lName)
-    VALUES ('user3@example.com', 'password3hash', 'Bob', 'Johnson');
+    VALUES ('user3@example.com', 'password3hash', 'Bob', 'Johnson'); -- Blank User
 
 INSERT INTO exercise (id, name, info, link) 
 VALUES
@@ -75,3 +117,34 @@ VALUES
     (4, 2, '2023-07-10', 'Purchase', 30, 0, TRUE, TRUE),
     (5, 2, '2023-06-25', 'Refund', -20, 0, FALSE, TRUE),
     (6, 3, '2023-06-15', 'Purchase', 60, 5, FALSE, TRUE);
+
+INSERT INTO ticket (subject, description)
+VALUES 
+    ('Treadmill Maintenance', 'Treadmill in the cardio area is making a strange noise.'),
+    ('Weight Machine Adjustment', 'Need an adjustment on the weight machine in the weightlifting area.'),
+    ('Elliptical Repairs', 'Elliptical machine in the cardio section is not functioning correctly.'),
+    ('Equipment Replacement Request', 'Requesting the replacement of worn-out resistance bands in the gym.');
+
+INSERT INTO event (name, info, "when")
+VALUES 
+    ('Yoga Class', 'Join us for a relaxing yoga class in the studio.', '2023-11-15'),
+    ('Weightlifting Workshop', 'Learn proper weightlifting techniques with our trainers.', '2023-11-20'),
+    ('Cardio Challenge', 'Participate in our cardio challenge and win prizes!', '2023-11-25'),
+    ('Nutrition Seminar', 'Attend our nutrition seminar to optimize your diet.', '2023-12-02'),
+    ('Group Run', 'Join a group run around the neighborhood for fitness and fun.', '2023-12-10');
+
+INSERT INTO rsvpActivities (aid, uid)
+VALUES
+    (1,1),
+    (1,2),
+    (1,3),
+    (3,1),
+    (2,1),
+    (2,2),
+    (3,2);
+    
+INSERT INTO payment (uid, type, cardNum, expiryYear, expiryMonth, cvc, name)
+VALUES 
+    (1, 'Credit Card', '1234567890123456', 2025, 11, 123, 'John Doe'),
+    (2, 'Debit Card', '9876543210987654', 2024, 10, 456, 'Jane Smith'),
+    (3, 'Credit Card', '1111222233334444', 2023, 9, 789, 'Bob Johnson');
