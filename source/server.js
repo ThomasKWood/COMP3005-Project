@@ -65,11 +65,17 @@ function isAuthenticated (req, res, next) {
   }
 }
 
+async function getUsers() {
+  let users = await db.any('SELECT id, email, fname, lname, joinDate FROM  public.user');
+  return users;
+
+
+}
 
 // ------------ROUTES------------
 // -------GETS
 // Home
-app.get(['/', '/home'], function (req, res) {
+app.get(['/', '/home'], async function (req, res) {
   // for html
   let rawRequest = req.headers.accept;
   let requestSplit = rawRequest.split(",");
@@ -79,10 +85,13 @@ app.get(['/', '/home'], function (req, res) {
 
   res.status(200);
   res.setHeader("Content-Type", "text/html");
-  if (req.session.user) {
+  if (req.session.user && !req.session.admin) {
       res.send(pug.renderFile("./views/pages/home.pug", {loggedin: true}));
-  } else {
+  } else if (!req.session.admin) {
       res.send(pug.renderFile("./views/pages/home.pug", {loggedin: false}));
+  } else if (req.session.user && req.session.admin) {
+      let users = await getUsers();
+      res.send(pug.renderFile("./views/pages/adminDashboard.pug", {loggedin: true, admin: true}));
   }
 });
 // LOGIN
@@ -101,6 +110,28 @@ app.get('/login', (req, res) => {
       res.send(pug.renderFile("./views/pages/login.pug", {loggedin: false}));
   }
 });
+
+// LOGOUT
+app.get('/logout', function (req, res, next) {
+  // logout logic
+
+  // clear the user from the session object and save.
+  // this will ensure that re-using the old session id
+  // does not have a logged in user
+  req.session.user = null
+  req.session.admin = false
+  req.session.loggedin = false
+  req.session.save(function (err) {
+    if (err) next(err)
+
+    // regenerate the session, which is good practice to help
+    // guard against forms of session fixation
+    req.session.regenerate(function (err) {
+      if (err) next(err)
+      res.redirect('/')
+    })
+  })
+})
 
 
 
@@ -202,6 +233,7 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
         res.status(200).json({ message: 'Authentication successful' });
         req.session.loggedin = true;
         req.session.user = user.email;
+        req.session.admin = user.admin;
 
         await new Promise((resolve, reject) => {
           req.session.save(async function (err) {
