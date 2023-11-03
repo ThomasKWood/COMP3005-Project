@@ -33,8 +33,8 @@ app.use(session({
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true,
+  cookie: { maxAge: 30 * 60 * 1000 }, // 30 minutes
   store: pgStore,
-
 }))
 
 
@@ -56,7 +56,7 @@ app.use(session({
 //     next();
 // });
 
-
+// Functions
 function isAuthenticated (req, res, next) {
   if (req.session.user) {
     next();
@@ -64,14 +64,39 @@ function isAuthenticated (req, res, next) {
     res.redirect('/login');
   }
 }
-
+// SQL Getters
 async function getUsers() {
-  let users = await db.any('SELECT id, email, fname, lname, joinDate FROM  public.user');
-  return users;
-
-
+  return await db.any('SELECT id, email, fname, lname, joinDate FROM public.user');
 }
 
+async function getTickets() {
+  return await db.any('SELECT id, subject, description FROM ticket');
+}
+
+async function getTransactions() {
+  return await db.any('SELECT t.id AS transaction_id, u.fname AS first_name, u.lname AS last_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id');
+}
+
+async function getUserTransactions(userID) {
+  if (typeof userID === 'number' && Number.isInteger(userID)) {
+    // id lookup
+    return await db.any('SELECT t.id AS transaction_id, u.fname AS first_name, u.lname AS last_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.id = $1', [userID]);
+  } else if (typeof value === 'string') {
+    // email lookup
+    return await db.any('SELECT t.id AS transaction_id, u.fname AS first_name, u.lname AS last_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.email = \'$1\'', [userID]);
+  } else {
+    console.log('got a bad parameter for getUserTransactions()');
+    return null;
+  }
+}
+
+async function getEvents() {
+  return await db.any('SELECT id, email, fname, lname, joinDate FROM  public.user');
+}
+
+async function getEventRSVP(eventID) { 
+
+}
 // ------------ROUTES------------
 // -------GETS
 // Home
@@ -110,7 +135,6 @@ app.get('/login', (req, res) => {
       res.send(pug.renderFile("./views/pages/login.pug", {loggedin: false}));
   }
 });
-
 // LOGOUT
 app.get('/logout', function (req, res, next) {
   // logout logic
@@ -132,6 +156,18 @@ app.get('/logout', function (req, res, next) {
     })
   })
 })
+
+
+app.get(['/users', '/tickets', '/billing', '/events'], async function (req, res) {
+  if (req.url ===  '/users') {
+
+  } else if (req.url === '/tickets') {
+
+  } else if (req.url === '/billing') {
+
+  } else if (req.url === '/events') {
+  }
+});
 
 
 

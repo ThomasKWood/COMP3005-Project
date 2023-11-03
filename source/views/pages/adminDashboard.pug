@@ -15,86 +15,86 @@ html
           a(href="#billing-tab") Billing
         li
           a(href="#events-tab") Events
-    .tab-content
-      // Users Tab
-      #users-tab.tab
-        h2 Users
-        table
-          thead
-            tr
-              th Username
-              th Actions
-          tbody
-            each user in usersData 
-              tr
-                td= user.username
-                td
-                  button.edit-button(type="button") Edit
-                  button.reset-password-button(type="button") Reset Password
-        button.add-user-button(type="button") Add User
+    //- .tab-content
+    //-   // Users Tab
+    //-   #users-tab.tab
+    //-     h2 Users
+    //-     table
+    //-       thead
+    //-         tr
+    //-           th Username
+    //-           th Actions
+    //-       tbody
+    //-         each user in usersData 
+    //-           tr
+    //-             td= user.username
+    //-             td
+    //-               button.edit-button(type="button") Edit
+    //-               button.reset-password-button(type="button") Reset Password
+    //-     button.add-user-button(type="button") Add User
 
-      // Maintenance Tab
-      #maintenance-tab.tab
-        h2 Maintenance Tickets
-        table
-          thead
-            tr
-              th Ticket ID
-              th Description
-              th Status
-          tbody
-            each ticket in maintenanceData // Replace with your JSON data
-              tr
-                td= ticket.id
-                td= ticket.description
-                td= ticket.status
+    //-   // Maintenance Tab
+    //-   #maintenance-tab.tab
+    //-     h2 Maintenance Tickets
+    //-     table
+    //-       thead
+    //-         tr
+    //-           th Ticket ID
+    //-           th Description
+    //-           th Status
+    //-       tbody
+    //-         each ticket in maintenanceData
+    //-           tr
+    //-             td= ticket.id
+    //-             td= ticket.description
+    //-             td= ticket.status
 
-      // Billing Tab
-      #billing-tab.tab
-        h2 Billing
-        h3 Create New Bill
-        form#bill-form
-          label(for="user-select") Select User:
-          select#user-select
-            option(value="user1") User 1
-            option(value="user2") User 2
-            // Add options for all users
-          label(for="amount") Amount:
-          input#amount(type="text")
-          button#create-bill-button(type="button") Create Bill
+    //-   // Billing Tab
+    //-   #billing-tab.tab
+    //-     h2 Billing
+    //-     h3 Create New Bill
+    //-     form#bill-form
+    //-       label(for="user-select") Select User:
+    //-       select#user-select
+    //-         option(value="user1") User 1
+    //-         option(value="user2") User 2
+    //-         // Add options for all users
+    //-       label(for="amount") Amount:
+    //-       input#amount(type="text")
+    //-       button#create-bill-button(type="button") Create Bill
 
-        h3 Transaction History
-        table
-          thead
-            tr
-              th User
-              th Amount
-              th Date
-          tbody
-            each transaction in transactionsData // Replace with your JSON data
-              tr
-                td= transaction.user
-                td= transaction.amount
-                td= transaction.date
+    //-     h3 Transaction History
+    //-     table
+    //-       thead
+    //-         tr
+    //-           th User
+    //-           th Amount
+    //-           th Date
+    //-       tbody
+    //-         each transaction in transactionsData
+    //-           tr
+    //-             td= transaction.user
+    //-             td= transaction.amount
+    //-             td= transaction.date
 
-      // Events Tab
-      #events-tab.tab
-        h2 Events
-        h3 Create New Event
-        form#event-form
-          label(for="event-name") Event Name:
-          input#event-name(type="text")
-          label(for="event-info") Event Info:
-          input#event-info(type="text")
-          label(for="event-date") Event Date:
-          input#event-date(type="text")
-          button#create-event-button(type="button") Create Event
+    //-   // Events Tab
+    //-   #events-tab.tab
+    //-     h2 Events
+    //-     h3 Create New Event
+    //-     form#event-form
+    //-       label(for="event-name") Event Name:
+    //-       input#event-name(type="text")
+    //-       label(for="event-info") Event Info:
+    //-       input#event-info(type="text")
+    //-       label(for="event-date") Event Date:
+    //-       input#event-date(type="text")
+    //-       button#create-event-button(type="button") Create Event
 
-        h3 Event List
-        ul
-          each event in eventsData // Replace with your JSON data
-            li
-              p Event Name: #{event.name}
-              p Event Info: #{event.info}
-              p Event Date: #{event.date}
-              p RSVP Users: #{event.rsvpUsers.join(', ')}
+    //-     h3 Event List
+    //-     ul
+    //-       each event in eventsData
+    //-         li
+    //-           p Event Name: #{event.name}
+    //-           p Event Info: #{event.info}
+    //-           p Event Date: #{event.date}
+    //-           p RSVP Users: #{event.rsvpUsers.join(', ')}
