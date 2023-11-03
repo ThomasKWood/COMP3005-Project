@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS event;
 DROP TABLE IF EXISTS payment;
 DROP TABLE IF EXISTS "transaction";
 DROP TABLE IF EXISTS "user";
+DROP TABLE IF EXISTS user_sessions;
 
 
 -- CREATE TABLES
@@ -14,7 +15,7 @@ DROP TABLE IF EXISTS "user";
 CREATE TABLE "user" (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
-    password CHAR(64) NOT NULL,
+    password VARCHAR(64) NOT NULL,
     fName VARCHAR(255) NOT NULL,
     lName VARCHAR(255) NOT NULL,
     admin BOOLEAN DEFAULT FALSE,
@@ -81,6 +82,13 @@ CREATE TABLE payment (
     cvc INT,
     name VARCHAR(255),
     FOREIGN KEY (uid) REFERENCES public.user(id)
+);
+
+CREATE TABLE user_sessions (
+  sid VARCHAR NOT NULL,
+  sess json NOT NULL,
+  expire timestamp(6) NOT NULL,
+  PRIMARY KEY (sid)
 );
 
 -- INSERT DATA
