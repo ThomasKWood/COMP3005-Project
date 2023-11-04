@@ -86,7 +86,7 @@ async function getUserTransactions(userID) {
     return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.id = $1', [userID]);
   } else if (typeof value === 'string') {
     // email lookup
-    return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.email = \'$1\'', [userID]);
+    return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.email = $1', [userID]);
   } else {
     console.log('got a bad parameter for getUserTransactions()');
     return null;
@@ -100,7 +100,7 @@ async function getUser(userID) {
     return await db.oneOrNone('SELECT * FROM public.user WHERE id = $1', [userID]);
   } else if (typeof value === 'string') {
     // email lookup
-    return await db.oneOrNone('SELECT * FROM public.user WHERE email = \'$1\'', [userID]);
+    return await db.oneOrNone('SELECT * FROM public.user WHERE email = $1', [userID]);
   }
 }
 // get user payment by id or email
@@ -110,7 +110,7 @@ async function getUserPayment(userID) {
     return await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [userID]);
   } else if (typeof value === 'string') {
     // email lookup
-    return await db.oneOrNone('SELECT * FROM public.payment WHERE uid = \'$1\'', [userID]);
+    return await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [userID]);
   }
 }
 
@@ -146,7 +146,7 @@ async function getAddedExercises(userID) {
     // WHERE u.email = 'user1@example.com';
   } else if (typeof value === 'string') {
     // email lookup
-    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN public.user AS u ON ea.uid = u.id WHERE u.email = \'$1\'', [userID]);
+    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN public.user AS u ON ea.uid = u.id WHERE u.email = $1', [userID]);
   } else {
     console.log('got a bad parameter for getAddedExercises()');
     return null;
@@ -162,8 +162,18 @@ async function addEvent(info) {
   // {name: "event1", info: "this event is cool", when: "2020-12-12 12:00:00"}
   
   // insert into db
-  let query = 'INSERT INTO public.event(name, info, "when") VALUES($1, $2, CAST(\'$3\' AS DATE))';
+  let query = 'INSERT INTO public.event(name, info, \"when\") VALUES($1, $2, CAST($3 AS DATE))';
+  await db.none(query, [event.name, event.info, event.when]).then(() => {
+    console.log('Data inserted successfully');
+    return true;
+  })
+  .catch(error => {
+    return false;
+  });
 }
+
+
+
 
 
 // ------------ROUTES------------
