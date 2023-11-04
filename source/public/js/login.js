@@ -43,7 +43,7 @@ function login() {
         if (this.readyState==4) {
             // server accepted login
             if (req.status === 200) {
-                alert("Succesfully Logged-In.\nRedirecting to home page.");
+                //alert("Succesfully Logged-In.\nRedirecting to home page.");
                 window.location = "/home";
             }
             // server said password was incorrect
@@ -53,6 +53,10 @@ function login() {
             // server said username was not registered
             if(req.status === 404) {
                 alert("Email not registered.");
+            }
+
+            if (req.status === 402) {
+                alert("Account has been disabled. Please contact an admininstrator.");
             }
         }
     };

@@ -5,6 +5,9 @@
  * Responsible for handeling and rendering the pages of the fitness app.
 **/
 
+// TODO: Add routine table that is accoiated with some exercises
+
+
 var pug = require("pug");
 var express = require('express')
 var session = require('express-session')
@@ -80,23 +83,89 @@ async function getTransactions() {
 async function getUserTransactions(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
-    return await db.any('SELECT t.id AS transaction_id, u.fname AS first_name, u.lname AS last_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.id = $1', [userID]);
+    return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.id = $1', [userID]);
   } else if (typeof value === 'string') {
     // email lookup
-    return await db.any('SELECT t.id AS transaction_id, u.fname AS first_name, u.lname AS last_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.email = \'$1\'', [userID]);
+    return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.email = \'$1\'', [userID]);
   } else {
     console.log('got a bad parameter for getUserTransactions()');
     return null;
   }
 }
 
-async function getEvents() {
-  return await db.any('SELECT id, email, fname, lname, joinDate FROM  public.user');
+// get user by id or email
+async function getUser(userID) {
+  if (typeof userID === 'number' && Number.isInteger(userID)) {
+    // id lookup
+    return await db.oneOrNone('SELECT * FROM public.user WHERE id = $1', [userID]);
+  } else if (typeof value === 'string') {
+    // email lookup
+    return await db.oneOrNone('SELECT * FROM public.user WHERE email = \'$1\'', [userID]);
+  }
+}
+// get user payment by id or email
+async function getUserPayment(userID) {
+  if (typeof userID === 'number' && Number.isInteger(userID)) {
+    // id lookup
+    return await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [userID]);
+  } else if (typeof value === 'string') {
+    // email lookup
+    return await db.oneOrNone('SELECT * FROM public.payment WHERE uid = \'$1\'', [userID]);
+  }
+}
+
+async function getUpcomingEvents() {
+  return await db.any('SELECT * FROM public.event WHERE "when" >= NOW() ORDER BY "when" ASC');
+}
+
+async function getPastEvents() {
+  return await db.any('SELECT * FROM public.event WHERE "when" < NOW() ORDER BY "when" DESC');
 }
 
 async function getEventRSVP(eventID) { 
-
+  // SELECT CONCAT(u.fname, ' ', u.lname) AS full_name, u.email
+  // FROM rsvpactivities AS ra
+  // JOIN public.user AS u ON ra.uid = u.id
+  // WHERE ra.aid = 1;
+  return await db.any('SELECT CONCAT(u.fname, \' \', u.lname) AS full_name, u.email FROM rsvpactivities AS ra JOIN public.user AS u ON ra.uid = u.id WHERE ra.aid = $1', [eventID]);
 }
+
+async function getAllExercises() {
+  return await db.any('SELECT * FROM exercise');
+}
+
+async function getAddedExercises(userID) {
+  if (typeof userID === 'number' && Number.isInteger(userID)) {
+    // id lookup
+    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN public.user AS u ON ea.uid = u.id WHERE u.id = $1', [userID]);
+
+    // SELECT e.id AS exercise_id, e.name, e.info, e.link
+    // FROM exercise AS e
+    // JOIN exerciseadded AS ea ON e.id = ea.eid
+    // JOIN public.user AS u ON ea.uid = u.id
+    // WHERE u.email = 'user1@example.com';
+  } else if (typeof value === 'string') {
+    // email lookup
+    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN public.user AS u ON ea.uid = u.id WHERE u.email = \'$1\'', [userID]);
+  } else {
+    console.log('got a bad parameter for getAddedExercises()');
+    return null;
+  }
+}
+
+// SQL Setters
+async function addEvent(info) {
+  // convert info into object
+  let event = JSON.parse(info);
+
+  // json format
+  // {name: "event1", info: "this event is cool", when: "2020-12-12 12:00:00"}
+  
+  // insert into db
+  let query = 'INSERT INTO public.event(name, info, "when") VALUES($1, $2, CAST(\'$3\' AS DATE))';
+}
+
+
 // ------------ROUTES------------
 // -------GETS
 // Home
@@ -157,20 +226,74 @@ app.get('/logout', function (req, res, next) {
   })
 })
 
-
-app.get(['/users', '/tickets', '/billing', '/events'], async function (req, res) {
+// process data requests
+app.get(['/users', '/tickets', '/billing', '/events', '/exercises'], async function (req, res) {
   if (req.url ===  '/users') {
-
+    let users = await getUsers();
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(users));
   } else if (req.url === '/tickets') {
-
+    let tickets = await getTickets();
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(tickets));
   } else if (req.url === '/billing') {
-
+    let transactions = await getTransactions();
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(transactions));
   } else if (req.url === '/events') {
+    let upcomingEvents = await getUpcomingEvents();
+    let pastEvents = await getPastEvents();
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify({upcoming: upcomingEvents, past: pastEvents}));
+  } else if (req.url === '/exercises') {
+    let exercises = await getAllExercises();
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(exercises));
   }
 });
 
+// process data requests with parameter
+app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/usertransactions/:id'], async function (req, res) {
+  let id = req.params.id;
+  if (Number.isInteger(parseInt(id))) {
+    id = parseInt(id);
+  }
 
-
+  // Determine the route based on the URL
+  if (req.originalUrl.includes('/user/')) {
+    let user = await getUser(id);
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(user));
+  } else if (req.originalUrl.includes('/payment/')) {
+    let payMethod = await getUserPayment(id);
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(payMethod));
+  } else if (req.originalUrl.includes('/event/')) {
+    let eventAttendes = await getEventRSVP(id);
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(eventAttendes));
+  } else if (req.originalUrl.includes('/userexercises/')) {
+    let addedExercises = await getAddedExercises(id);
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(addedExercises));
+  } else if (req.originalUrl.includes('/usertransactions/')) {
+    let usertransactions = await getUserTransactions(id);
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(usertransactions));
+  } else {
+    console.log("got a bad request for a parameterized route");
+  }
+});
 
 // -------POSTS
 // LOGIN RECIEVE
@@ -261,6 +384,12 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
         if (user.password !== password) {
           response = true;
           res.status(401).json({ message: 'Incorrect password' });
+          return;
+        }
+
+        if (user.disabled) {
+          response = true;
+          res.status(402).json({ message: 'User is disabled' });
           return;
         }
 
