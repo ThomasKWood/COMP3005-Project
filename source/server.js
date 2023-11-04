@@ -7,12 +7,12 @@
 
 // TODO: Add routine table that is accoiated with some exercises
 
-
 var pug = require("pug");
 var express = require('express')
 var session = require('express-session')
 var pgp = require('pg-promise')();
 const sqlCreds = require('./!SQLcreds.js');
+const { as } = require("pg-promise");
 var db = pgp(sqlCreds);
 var pgSession = require('connect-pg-simple')(session);
 
@@ -39,25 +39,6 @@ app.use(session({
   cookie: { maxAge: 30 * 60 * 1000 }, // 30 minutes
   store: pgStore,
 }))
-
-
-// app.use(
-//     session({
-//         name: 'session',
-//         keys: ['key1', 'key2'],
-//         secret: "secret-key",
-//         resave: true,
-//         saveUninitialized: false,
-//         store: pgStore,
-//         cookie: {
-//           maxAge: 1800000 // 30 mins
-//           //secure: false
-//       }
-//     })
-// );
-// app.use(function(req, res, next){
-//     next();
-// });
 
 // Functions
 function isAuthenticated (req, res, next) {
@@ -153,6 +134,17 @@ async function getAddedExercises(userID) {
   }
 }
 
+async function getEmailExists(email) {
+  // check if email exists
+  let result = await db.oneOrNone('SELECT * FROM public.user WHERE email = $1', [email]);
+
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 // SQL Setters
 async function addEvent(info) {
   // convert info into object
@@ -168,14 +160,181 @@ async function addEvent(info) {
     return true;
   })
   .catch(error => {
+    console.log('Error inserting data: ', error);
     return false;
   });
+}
+
+async function addNewExercise(info) {
+  // convert info into object
+  let exercise = JSON.parse(info);
+
+  // json format
+  // {name: "exercise1", info: {stpes: ["step1", "step2", "step3"], muscles: ["back", "shoulders"]}, link: "http://linktogifofexercise.com"}
+
+  // insert into db
+  let query = 'INSERT INTO public.exercise(name, info, link) VALUES($1, $2, $3)';
+  await db.none(query, [exercise.name, exercise.info, exercise.link]).then(() => {
+    console.log('Data inserted successfully');
+    return true;
+  })
+  .catch(error => {
+    console.log('Error inserting data: ', error);
+    return false;
+  });
+}
+
+async function addExerciseToUser(info) {
+  // convert info into object
+  let exercise = JSON.parse(info);
+
+  // json format
+  // {exercise: 2, user: 1}
+
+  // insert into db
+  let query = 'INSERT INTO public.exerciseadded(eid, uid) VALUES($1, $2)';
+  await db.none(query, [exercise.user, exercise.exercise]).then(() => {
+    console.log('Data inserted successfully');
+    return true;
+  })
+  .catch(error => {
+    console.log('Error inserting data: ', error);
+    return false;
+  });
+}
+
+async function addTransaction(info) {
+  // convert info into object
+  let transaction = JSON.parse(info);
+
+
+
+}
+
+async function addTicket(info) {
+  // convert info into object
+  let ticket = JSON.parse(info);
+
+
+}
+
+async function addActivity(info) {
+  // convert info into object
+  let activity = JSON.parse(info);
+
+}
+
+async function addRSVP(info) {
+  // convert info into object
+  let rsvp = JSON.parse(info);
+
+}
+
+async function addPayment(info) {
+  // convert info into object
+  let payment = JSON.parse(info);
+
+}
+
+async function addUser(info) {
+  // convert info into object
+  let user = JSON.parse(info);
+
+  // json format
+  // {fname: "Thomas", lname: "Wood", email: "twood@carleton", password: "password", admin: false, disabled: false}
+
+  // insert into db
+  let query = 'INSERT INTO public.user(fname, lname, email, password, admin, disabled) VALUES($1, $2, $3, $4, $5, $6)';
+  await db.none(query, [user.fname, user.lname, user.email, user.password, user.admin, user.disabled]).then(() => {
+    console.log('Data inserted successfully');
+    return true;
+  })
+  .catch(error => {
+    console.log('Error inserting data: ', error);
+    return false;
+  });
+}
+
+// updaters
+async function updateLastdone(info) {
+  // convert info into object
+  let exercise = JSON.parse(info);
+
+  // json format
+  // {exercise: 2, user: 1, lastDone: "2020-12-12 12:00:00"}
+
+  let query = 'UPDATE public.exerciseadded SET lastdone = CAST($1 AS DATE) WHERE eid = $2 AND uid = $3';
+  await db.none(query, [exercise.lastDone, exercise.exercise, exercise.user]).then(() => {
+    console.log('Data updated successfully');
+    return true;
+  })
+  .catch(error => {
+    console.log('Error updating data: ', error);
+    return false;
+  });
+}
+
+async function payTransaction(info) {
+  // determine if paid by points or money
+
+  // check if payment exists?
+  // check if payment is expired
+  // update transaction
+
+
+  // pay with points
+  
+  // get user points
+  // check amount of points
+
+  // update transactions
+
+  // update user points
+
+
+}
+
+async function completeTicket(id) {
+  // remove ticket from db
+
+}
+
+async function addPayment(info) {
+  // check if payment already exists
+
+  // is current payment expired?
+
+  // update payment
+
+  // no payment exists
+
+  // add payment
+
+}
+
+async function toggleUser(state) {
+  // update user disabled state
+
+  // true = disabled
+}
+
+async function changePassword(password) {
+  // update user password
+
+}
+
+async function updateAccount(accountInfo) {
+  // update user account info
+}
+
+async function updateGoals(goals) {
+    // update user goals
 }
 
 
 
 
-
+  
 // ------------ROUTES------------
 // -------GETS
 // Home
@@ -307,57 +466,6 @@ app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/user
 
 // -------POSTS
 // LOGIN RECIEVE
-// app.post('/login', express.urlencoded({ extended: false }), function (req, res) {
-// // app.post('/login', (req, res) => {
-//   console.log("\nrecieving a login...");
-//   reqObject = req['headers'];
-//   let request = reqObject['content-type'];
-//   console.log("    content type: "+request);
-
-//   // is format json?
-//   if (request === "application/json") {
-//     req.session.regenerate(function (err) {
-//       if (err) next(err)
-//       // fromat is json
-//       let username = req.body.username;
-//       let password = req.body.password;
-
-//       try {
-//         let user = await db.oneOrNone('SELECT * FROM public.user WHERE email = $1', [username]);
-//         // const user = db.oneOrNone('SELECT * FROM public.user WHERE email = $1', [username]);
-
-//         if (!user) {
-//           res.status(401).json({ message: 'User not found' });
-//           return;
-//         }
-
-//         if (user.password !== password) {
-//           res.status(401).json({ message: 'Incorrect password' });
-//           return;
-//         }
-
-//         // Authentication successful
-//         res.status(200).json({ message: 'Authentication successful' });
-//         req.session.loggedin = true;
-//         req.session.user = user.email;
-//         req.session.save(function (err) {
-//           if (err) return next(err)
-//           res.redirect('/')
-//         })
-//       } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: 'Internal Server Error' });
-//       }
-//     })
-
-//   // format is not json 
-//   } else {
-//       res.status(500);
-//       res.setHeader("Content-Type", "text/plain");
-//       res.send("server only accepts json");
-//       console.log("    could not verify user login. incorrect format.\n");
-//   }
-// });
 app.post('/login', express.urlencoded({ extended: false }), async (req, res) => {
   console.log("\nreceiving a login...");
   reqObject = req['headers'];
