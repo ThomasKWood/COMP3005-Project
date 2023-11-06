@@ -111,6 +111,13 @@ async function getEventRSVP(eventID) {
   return await db.any('SELECT CONCAT(u.fname, \' \', u.lname) AS full_name, u.email FROM rsvpactivities AS ra JOIN public.user AS u ON ra.uid = u.id WHERE ra.aid = $1', [eventID]);
 }
 
+async function getRSVPevents(userID) {
+  // SELECT aid
+  // FROM rsvpactivities
+  // WHERE uid = $1
+  return await db.any('SELECT aid FROM rsvpactivities WHERE uid = $1', [userID]);
+}
+
 async function getAllExercises() {
   return await db.any('SELECT * FROM exercise');
 }
@@ -207,32 +214,134 @@ async function addTransaction(info) {
   // convert info into object
   let transaction = JSON.parse(info);
 
-
-
+  // json format
+  // {uid: 1, date: "2023-12-25", type: "Subscription Renewal", amount: 100, points: 100}
+  let query = 'INSERT INTO public.transaction(uid, date, type, amount, points) VALUES($1, CAST($2 AS DATE), $3, $4, $5)';
+  await db.none(query, [transaction.uid, transaction.date, transaction.type, transaction.amount, transaction.points]).then(() => {
+    console.log('Data inserted successfully');
+    return true;
+  }).catch(error => {
+    console.log('Error inserting data: ', error);
+    return false;
+  });
 }
 
 async function addTicket(info) {
   // convert info into object
   let ticket = JSON.parse(info);
 
+  // json format
+  // {subject: "Treadmil 5 INOP", description: "Machine has power but motor does not move belt."}
 
+  // insert into db
+  let query = 'INSERT INTO public.ticket(subject, description) VALUES($1, $2)';
+  await db.none(query, [ticket.subject, ticket.description]).then(() => {
+    console.log('Data inserted successfully');
+    return true;
+  }).catch(error => {
+    console.log('Error inserting data: ', error);
+    return false;
+  });
 }
 
 async function addActivity(info) {
   // convert info into object
   let activity = JSON.parse(info);
 
+  // json format
+  // {name: "Yoga Class", info: "this activity is cool", when: "2020-12-24 12:00:00"}
+
+  // insert into db
+  let query = 'INSERT INTO public.activity(name, info, \"when\") VALUES($1, $2, CAST($3 AS DATE))';
+  await db.none(query, [activity.name, activity.info, activity.when]).then(() => {
+    console.log('Data inserted successfully');
+    return true;
+  }).catch(error => {
+    console.log('Error inserting data: ', error);
+    return false;
+  });
 }
 
 async function addRSVP(info) {
   // convert info into object
   let rsvp = JSON.parse(info);
 
+  // json format
+  // {aid: 1, uid: 1}
+
+  // insert into db
+  let query = 'INSERT INTO public.rsvpactivities(aid, uid) VALUES($1, $2)';
+  await db.none(query, [rsvp.aid, rsvp.uid]).then(() => {
+    console.log('Data inserted successfully');
+    return true;
+  }).catch(error => {
+    console.log('Error inserting data: ', error);
+    return false;
+  });
 }
 
 async function addPayment(info) {
   // convert info into object
   let payment = JSON.parse(info);
+
+  // json format
+  // {uid: 1, type: "Visa", number: "123456789", expiryYear: 2023, expiryMonth: 12, cvc: 123, name: "John Smith"}
+
+  // check if payment already exists
+  let result = await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [payment.uid]);
+
+  if (result !== null) {
+    // check if payment is expired
+    let curDate = new Date();
+    let curYear = curDate.getFullYear();
+    let curMonth = curDate.getMonth() + 1;
+    let expiryYear = parseInt(payment.expiryYear);
+    let expiryMonth = parseInt(payment.expiryMonth);
+
+
+    let acceptUpdate = false
+    if (curYear > expiryYear) {
+      acceptUpdate = true;
+    } else if (curYear <= expiryYear) {
+      if (curMonth > expiryMonth) {
+        acceptUpdate = true;
+      }
+    }
+
+    if (acceptUpdate) {
+      // update payment
+      let query = 'UPDATE public.payment SET type = $1, number = $2, expiryYear = $3, expiryMonth = $4, cvc = $5, name = $6 WHERE uid = $7';
+      await db.none(query, [payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name, payment.uid]).then(() => {
+        console.log('Payment updated successfully');
+        return true;
+      }).catch(error => {
+        console.log('Error updating payment data: ', error);
+        return false;
+      });
+    } else {
+      // payment is not expired
+      console.log('Payment is not expired. Cannot update payment.');
+      return false;
+    }
+  } else {
+    // no payment exists
+    // check card is not expired first
+    let curDate = new Date();
+    let curYear = curDate.getFullYear();
+    let curMonth = curDate.getMonth() + 1;
+
+    let query = 'INSERT INTO public.payment(uid, type, number, expiryYear, expiryMonth, cvc, name) VALUES($1, $2, $3, $4, $5, $6, $7)';
+    await db.none(query, [payment.uid, payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name]).then(() => {
+      console.log('Payment inserted successfully');
+      return true;
+    }).catch(error => {
+      console.log('Error inserting payment data: ', error);
+      return false;
+    });
+  }
+
+  // add payment
+  }
 
 }
 
@@ -296,19 +405,6 @@ async function payTransaction(info) {
 
 async function completeTicket(id) {
   // remove ticket from db
-
-}
-
-async function addPayment(info) {
-  // check if payment already exists
-
-  // is current payment expired?
-
-  // update payment
-
-  // no payment exists
-
-  // add payment
 
 }
 
@@ -427,7 +523,7 @@ app.get(['/users', '/tickets', '/billing', '/events', '/exercises'], async funct
 });
 
 // process data requests with parameter
-app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/usertransactions/:id'], async function (req, res) {
+app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/usertransactions/:id', '/userevents/:id'], async function (req, res) {
   let id = req.params.id;
   if (Number.isInteger(parseInt(id))) {
     id = parseInt(id);
@@ -459,8 +555,13 @@ app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/user
     res.status(200);
     res.setHeader("Content-Type", "application/json");
     res.send(JSON.stringify(usertransactions));
+  } else if (req.originalUrl.includes('/userevents/')) {
+    let userevents = await getRSVPevents(id);
+    res.status(200);
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify(userevents));
   } else {
-    console.log("got a bad request for a parameterized route");
+    console.log("got a bad request for a get parameterized route: " + req.originalUrl);
   }
 });
 

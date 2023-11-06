@@ -50,7 +50,7 @@ CREATE TABLE "transaction" (
     amount INT,
     points INT,
     paidByPoints BOOLEAN,
-    paid BOOLEAN
+    paid BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE ticket (
