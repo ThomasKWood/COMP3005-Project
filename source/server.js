@@ -191,7 +191,7 @@ async function addNewExercise(info) {
   });
 }
 
-async function addExerciseToUser(info) {
+async function addExerciseToUser(info, userID) {
   // convert info into object
   let exercise = JSON.parse(info);
 
@@ -200,7 +200,7 @@ async function addExerciseToUser(info) {
 
   // insert into db
   let query = 'INSERT INTO public.exerciseadded(eid, uid) VALUES($1, $2)';
-  await db.none(query, [exercise.user, exercise.exercise]).then(() => {
+  await db.none(query, [exercise.exercise, userID]).then(() => {
     console.log('Data inserted successfully');
     return true;
   })
@@ -280,7 +280,7 @@ async function addRSVP(info) {
   });
 }
 
-async function addPayment(info) {
+async function addPayment(info, userID) {
   // convert info into object
   let payment = JSON.parse(info);
 
@@ -288,18 +288,18 @@ async function addPayment(info) {
   // {uid: 1, type: "Visa", number: "123456789", expiryYear: 2023, expiryMonth: 12, cvc: 123, name: "John Smith"}
 
   // check if payment already exists
-  let result = await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [payment.uid]);
+  let result = await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [userID]);
 
+  let curDate = new Date();
+  let curYear = curDate.getFullYear();
+  let curMonth = curDate.getMonth() + 1;
+  let expiryYear = parseInt(payment.expiryYear);
+  let expiryMonth = parseInt(payment.expiryMonth);
+  
+
+  let acceptUpdate = false
   if (result !== null) {
     // check if payment is expired
-    let curDate = new Date();
-    let curYear = curDate.getFullYear();
-    let curMonth = curDate.getMonth() + 1;
-    let expiryYear = parseInt(payment.expiryYear);
-    let expiryMonth = parseInt(payment.expiryMonth);
-
-
-    let acceptUpdate = false
     if (curYear > expiryYear) {
       acceptUpdate = true;
     } else if (curYear <= expiryYear) {
@@ -311,7 +311,7 @@ async function addPayment(info) {
     if (acceptUpdate) {
       // update payment
       let query = 'UPDATE public.payment SET type = $1, number = $2, expiryYear = $3, expiryMonth = $4, cvc = $5, name = $6 WHERE uid = $7';
-      await db.none(query, [payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name, payment.uid]).then(() => {
+      await db.none(query, [payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name, userID]).then(() => {
         console.log('Payment updated successfully');
         return true;
       }).catch(error => {
@@ -326,23 +326,30 @@ async function addPayment(info) {
   } else {
     // no payment exists
     // check card is not expired first
-    let curDate = new Date();
-    let curYear = curDate.getFullYear();
-    let curMonth = curDate.getMonth() + 1;
+    if (curYear > expiryYear) {
+      acceptUpdate = true;
+    } else if (curYear <= expiryYear) {
+      if (curMonth > expiryMonth) {
+        acceptUpdate = true;
+      }
+    }
 
-    let query = 'INSERT INTO public.payment(uid, type, number, expiryYear, expiryMonth, cvc, name) VALUES($1, $2, $3, $4, $5, $6, $7)';
-    await db.none(query, [payment.uid, payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name]).then(() => {
-      console.log('Payment inserted successfully');
-      return true;
-    }).catch(error => {
-      console.log('Error inserting payment data: ', error);
+    if (acceptUpdate) {
+      // update payment
+      let query = 'INSERT INTO public.payment(uid, type, number, expiryYear, expiryMonth, cvc, name) VALUES($1, $2, $3, $4, $5, $6, $7)';
+      await db.none(query, [userID, payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name]).then(() => {
+        console.log('Payment updated successfully');
+        return true;
+      }).catch(error => {
+        console.log('Error updating payment data: ', error);
+        return false;
+      });
+    } else {
+      // payment is not expired
+      console.log('Payment is not expired. Cannot update payment.');
       return false;
-    });
+    }
   }
-
-  // add payment
-  }
-
 }
 
 async function addUser(info) {
@@ -350,11 +357,11 @@ async function addUser(info) {
   let user = JSON.parse(info);
 
   // json format
-  // {fname: "Thomas", lname: "Wood", email: "twood@carleton", password: "password", admin: false, disabled: false}
+  // {fname: "Thomas", lname: "Wood", email: "thomaswood4@cmail.carleton.ca", password: "password", admin: false}
 
   // insert into db
-  let query = 'INSERT INTO public.user(fname, lname, email, password, admin, disabled) VALUES($1, $2, $3, $4, $5, $6)';
-  await db.none(query, [user.fname, user.lname, user.email, user.password, user.admin, user.disabled]).then(() => {
+  let query = 'INSERT INTO public.user(fname, lname, email, password, admin) VALUES($1, $2, $3, $4, $5, $6)';
+  await db.none(query, [user.fname, user.lname, user.email, user.password, user.admin]).then(() => {
     console.log('Data inserted successfully');
     return true;
   })
@@ -365,7 +372,7 @@ async function addUser(info) {
 }
 
 // updaters
-async function updateLastdone(info) {
+async function updateLastdone(info, userID) {
   // convert info into object
   let exercise = JSON.parse(info);
 
@@ -373,7 +380,7 @@ async function updateLastdone(info) {
   // {exercise: 2, user: 1, lastDone: "2020-12-12 12:00:00"}
 
   let query = 'UPDATE public.exerciseadded SET lastdone = CAST($1 AS DATE) WHERE eid = $2 AND uid = $3';
-  await db.none(query, [exercise.lastDone, exercise.exercise, exercise.user]).then(() => {
+  await db.none(query, [exercise.lastDone, exercise.exercise, userID]).then(() => {
     console.log('Data updated successfully');
     return true;
   })
@@ -383,48 +390,186 @@ async function updateLastdone(info) {
   });
 }
 
-async function payTransaction(info) {
+async function payTransaction(info, userID) {
+  let user = await getUser(userID);
+  let dbError = false;
+
+  // convert info into object
+  let transaction = JSON.parse(info);
+  // json format
+  // {id: 1, amount: 100, points: 100, paidbypoints: false}
+
   // determine if paid by points or money
+  if (transaction.paidbypoints) {
+    // pay with points
+    if (user.points >= transaction.amount) {
+      // user has enough points
+      // update user points
+      let query = 'UPDATE public.user SET points = $1 WHERE id = $2';
+      await db.none(query, [(user.points - transaction.amount) + transaction.points, userID]).then(() => {
+        console.log('User points updated successfully');
+        return true;
+      })
+      .catch(error => {
+        console.log('Error updating User points: ', error);
+        dbError = true;
+        return false;
+      });
+      if (dbError) {
+        return 0;
+      }
+      // update transaction
+      let query2 = 'UPDATE public.transaction SET paid = true WHERE id = $1';
+      await db.none(query2, [transaction.id]).then(() => {
+        console.log('Transaction updated successfully');
+        return true;
+      })
+      .catch(error => {
+        console.log('Error updating Transaction: ', error);
+        dbError = true;
+        return false;
+      });
+      if (dbError) {
+        return 0;
+      }
+      return 1;
+    } else {
+      // user does not have enough points
+      return -1;
+    }
+  } else {
+    // pay with money
 
-  // check if payment exists?
-  // check if payment is expired
-  // update transaction
+    // check if payment exists
+    let payment = await getUserPayment(userID);
 
+    // check if payment is expired
+    let curDate = new Date();
+    let curYear = curDate.getFullYear();
+    let curMonth = curDate.getMonth() + 1;
+    let expiryYear = parseInt(payment.expiryYear);
+    let expiryMonth = parseInt(payment.expiryMonth);
 
-  // pay with points
-  
-  // get user points
-  // check amount of points
+    if (curYear > expiryYear) {
+      // payment is expired
+      return -2;
+    } else if (curYear <= expiryYear) {
+      if (curMonth > expiryMonth) {
+        // payment is expired
+        return -2;
+      }
+    }
 
-  // update transactions
+    // update transaction to paid
+    let query = 'UPDATE public.transaction SET paid = true WHERE id = $1';
+    await db.none(query, [transaction.id]).then(() => {
+      console.log('Transaction updated successfully');
+      return true;
+    }).catch(error => {
+      console.log('Error updating Transaction: ', error);
+      dbError = true;
+      return false;
+    });
+    if (dbError) {
+      return 0;
+    }
 
-  // update user points
-
-
+    // update user points
+    let query2 = 'UPDATE public.user SET points = $1 WHERE id = $2';
+    await db.none(query2, [user.points + transaction.points, userID]).then(() => {
+      console.log('Transaction updated successfully');
+      return true;
+    }).catch(error => {
+      console.log('Error updating Transaction: ', error);
+      dbError = true;
+      return false;
+    });
+    if (dbError) {
+      return 0;
+    }
+    return 1;
+  }
 }
 
 async function completeTicket(id) {
   // remove ticket from db
-
+  let query = 'DELETE FROM public.ticket WHERE id = $1';
+  await db.none(query, [id]).then(() => {
+    console.log('Ticket removed successfully');
+    return true;
+  })
 }
 
-async function toggleUser(state) {
+async function toggleUser(info) {
+  // parse info
+  let user = JSON.parse(info);
+
+  // json format
+  // {id: 1, disabled: false}
+
   // update user disabled state
-
-  // true = disabled
+  let query = 'UPDATE public.user SET disabled = $1 WHERE id = $2';
+  await db.none(query, [user.disabled, user.id]).then(() => {
+    console.log('User disabled state updated successfully');
+    return true;
+  })
+  .catch(error => {
+    console.log('Error updating User disabled state: ', error);
+    return false;
+  });
 }
 
-async function changePassword(password) {
+async function changePassword(info) {
+  // parse info
+  let user = JSON.parse(info);
+
+  // json format
+  // {id: 1, password: "password"}
+
   // update user password
+  let query = 'UPDATE public.user SET password = $1 WHERE id = $2';
+  await db.none(query, [user.password, user.id]).then(() => {
+    console.log('User password updated successfully');
+    return true;
+  })
+  .catch(error => {
+    console.log('Error updating User password: ', error);
+    return false;
+  });
 
 }
 
-async function updateAccount(accountInfo) {
+async function updateAccount(accountInfo, userID) {
   // update user account info
+  let ai = JSON.parse(accountInfo);
+
+  // insert object into db
+  let query = 'UPDATE public.user SET accountinfo = $1 WHERE id = $2';
+  await db.none(query, [ai, userID]).then(() => {
+    console.log('User account info updated successfully');
+    return true;
+  })
+  .catch(error => {
+    console.log('Error updating User account info: ', error);
+    return false;
+  });
 }
 
-async function updateGoals(goals) {
-    // update user goals
+async function updateGoals(goals, userID) {
+  // update user goals
+  let g = JSON.parse(goals);
+
+  // insert object into db
+  let query = 'UPDATE public.user SET goals = $1 WHERE id = $2';
+  await db.none(query, [g, userID]).then(() => {
+    console.log('User goals updated successfully');
+    return true;
+  }
+  ).catch(error => {
+    console.log('Error updating User goals: ', error);
+    return false;
+  }
+  );
 }
 
 
@@ -450,7 +595,9 @@ app.get(['/', '/home'], async function (req, res) {
       res.send(pug.renderFile("./views/pages/home.pug", {loggedin: false}));
   } else if (req.session.user && req.session.admin) {
       let users = await getUsers();
-      res.send(pug.renderFile("./views/pages/adminDashboard.pug", {loggedin: true, admin: true}));
+      let tickets = await getTickets();
+      let transactions = await getTransactions();
+      res.send(pug.renderFile("./views/pages/adminDashboard.pug", {sessionUser: req.session.userID, users: users, tickets: tickets, transactions: transactions}));
   }
 });
 // LOGIN
@@ -618,6 +765,7 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
         req.session.loggedin = true;
         req.session.user = user.email;
         req.session.admin = user.admin;
+        req.session.userID = user.id;
 
         await new Promise((resolve, reject) => {
           req.session.save(async function (err) {

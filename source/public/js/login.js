@@ -44,7 +44,7 @@ function login() {
             // server accepted login
             if (req.status === 200) {
                 //alert("Succesfully Logged-In.\nRedirecting to home page.");
-                window.location = "/home";
+                window.location = "/";
             }
             // server said password was incorrect
             if(req.status === 401) {
