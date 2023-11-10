@@ -50,7 +50,7 @@ function isAuthenticated (req, res, next) {
 }
 // SQL Getters
 async function getUsers() {
-  return await db.any('SELECT id, email, fname, lname, joinDate FROM public.user');
+  return await db.any('SELECT id, email, fname, lname, admin, joinDate, points, disabled FROM public.user');
 }
 
 async function getTickets() {
@@ -353,22 +353,22 @@ async function addPayment(info, userID) {
 }
 
 async function addUser(info) {
-  // convert info into object
-  let user = JSON.parse(info);
-
-  // json format
-  // {fname: "Thomas", lname: "Wood", email: "thomaswood4@cmail.carleton.ca", password: "password", admin: false}
-
+  // object format
+  // {email: 'thomaswood4@cmail.carleton.ca', fname: 'Thomas', lname: 'Wood', password: 'password', admin: false}
+  
   // insert into db
-  let query = 'INSERT INTO public.user(fname, lname, email, password, admin) VALUES($1, $2, $3, $4, $5, $6)';
-  await db.none(query, [user.fname, user.lname, user.email, user.password, user.admin]).then(() => {
+  let result = false;
+  let query = 'INSERT INTO public.user(fname, lname, email, password, admin) VALUES($1, $2, $3, $4, $5)';
+  await db.none(query, [info.fname, info.lname, info.email, info.password, info.admin]).then(() => {
     console.log('Data inserted successfully');
+    result = true;
     return true;
   })
   .catch(error => {
     console.log('Error inserting data: ', error);
     return false;
   });
+  return result;
 }
 
 // updaters
@@ -597,7 +597,9 @@ app.get(['/', '/home'], async function (req, res) {
       let users = await getUsers();
       let tickets = await getTickets();
       let transactions = await getTransactions();
-      res.send(pug.renderFile("./views/pages/adminDashboard.pug", {sessionUser: req.session.userID, users: users, tickets: tickets, transactions: transactions}));
+      let uEvents = await getUpcomingEvents();
+      let pEvents = await getPastEvents();
+      res.send(pug.renderFile("./views/pages/adminDashboard.pug", {sessionUser: req.session.userID, users: users, tickets: tickets, transactions: transactions, uEvents: uEvents, pEvents: pEvents}));
   }
 });
 // LOGIN
@@ -800,7 +802,35 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
   }
 });
 
+app.post('/create-user', express.urlencoded({ extended: false }), async (req, res) => {
+  let user = req.body;
+  user.admin = req.body.admin ? true : false;
 
+  // check if email exists
+  let emailExists = await getEmailExists(user.email);
+
+  if (!emailExists) {
+    // create user
+    let result = await addUser(user);
+
+    if (result) {
+      res.status(200);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("User added successfully");
+      console.log("User added successfully.\n");
+    } else {
+      res.status(500);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("Could not create user");
+      console.log("Could not create user.\n");
+    }
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Email already exists");
+    console.log("Could not create user. Email already exists.\n");
+  }
+});
 
 
 // Test SQL connection

@@ -5,8 +5,6 @@ html
       include ../../public/stylesheet.css
     style
       include ../../public/collapased-table.css
-    script
-      include ../../public/js/adminDashboard.js
     title Admin Dashboard
   body
     header
@@ -28,21 +26,58 @@ html
         table
           thead
             tr
+              th ID
               th Email
-              th First Name
-              th Last Name
-              th Actions
           tbody
-            each user in users 
+            each user in users
               if (user.id !== sessionUser)
                 tr
+                  td= user.id
                   td= user.email
-                  td= user.fname 
-                  td= user.lname
-                  td
-                    button.disable-button(type="button", onclick=`disableUser(${user.id})`) Disable
-                    button.reset-password-button(type="button", onclick=`resetPassword(${user.id})`) Reset Password
-        button.add-user-button(type="button", onclick="addUser()") Add User
+                  td(colspan="2")
+                    .collapse-panel
+                      table
+                        tr
+                          th Admin
+                          td= user.admin 
+                        tr
+                          th First Name
+                          td= user.fname
+                        tr
+                          th Last Name
+                          td= user.lname
+                        tr
+                          th Join Date
+                          td= user.joindate 
+                        tr
+                          th Points
+                          td= user.points
+                        tr
+                          th Disabled?
+                          td= user.disabled
+                        tr 
+                          th Actions:
+                          td
+                            button.disable-button(type="button", onclick=`disableUser(${user.id})`) Disable
+                            button.reset-password-button(type="button", onclick=`resetPassword(${user.id})`) Reset Password
+        h3 Create New User
+        form(enctype="multipart/form-data" method="POST" name="create-user-form")
+          label(for="email") User Email:
+          input(type="email" id="email" name="email" placeholder="example@example.com" required)
+
+          label(for="password") User Password:
+          input(type="text" id="password" name="password" placeholder="1234" required)
+
+          label(for="fname") User's First Name:
+          input(type="text" id="fname" name="fname" placeholder="Steve" required)
+
+          label(for="lname") User's Last Name:
+          input(type="text" id="lname" name="lname" placeholder="Wood" required)
+
+          label(for="admin") Admin?
+          input(type="checkbox" id="admin" name="admin" value="true")
+
+          input(id="submit" type="submit" value="Submit")
 
       // Maintenance Tab
       #maintenance-tab.tab
@@ -52,22 +87,29 @@ html
             tr
               th Ticket ID
               th Subject
-              th Description
-              th Actions
           tbody
             each ticket in tickets
               tr
                 td= ticket.id
                 td= ticket.subject
-                td= ticket.description
-                td
-                  button.complete-ticket-button(type="button", onclick=`completeTicket(${ticket.id})`) Complete
+                td(colspan="2")
+                  .collapse-panel
+                    table
+                      tr
+                        th Description
+                        td= ticket.description
+                      tr
+                        th Mark as Complete
+                        td
+                          form(enctype="multipart/form-data" method="POST" name="delete-ticket-form")
+                            input(type="hidden" name="ticketId" value= ticket.id)
+                            button(type="submit") Complete
 
       // Billing Tab
       #billing-tab.tab
         h2 Billing
         h3 Create New Transaction
-        form(action="/create-transaction" method="POST")
+        form(enctype="multipart/form-data" method="POST" name="create-new-transaction-form")
           label(for="email") Email:
           input(type="email" id="email" name="email" placeholder="example@example.com" required)
 
@@ -123,26 +165,64 @@ html
                         th Date
                         td= transaction.date
 
-    //-   // Events Tab
-    //-   #events-tab.tab
-    //-     h2 Events
-    //-     h3 Create New Event
-    //-     form#event-form
-    //-       label(for="event-name") Event Name:
-    //-       input#event-name(type="text")
-    //-       label(for="event-info") Event Info:
-    //-       input#event-info(type="text")
-    //-       label(for="event-date") Event Date:
-    //-       input#event-date(type="text")
-    //-       button#create-event-button(type="button") Create Event
+      // Events Tab
+      #events-tab.tab
+        h2 Events
+        h3 Create New Event
+        form(action="/create-event" method="POST")
+          label(for="name") Event Name:
+          input(type="text" id="name" name="name" placeholder="Wednesday Yoga Class" required)
 
-    //-     h3 Event List
-    //-     ul
-    //-       each event in eventsData
-    //-         li
-    //-           p Event Name: #{event.name}
-    //-           p Event Info: #{event.info}
-    //-           p Event Date: #{event.date}
-    //-           p RSVP Users: #{event.rsvpUsers.join(', ')}
+          label(for="info") Event Info:
+          input(type="text" id="info" name="info" placeholder="2 hours log. Room 123. Requires Subscription" required)
+
+          label(for="when") When:
+          input(type="date" id="when" name="when" placeholder="YYYY-MM-DD" required)
+
+          input(type="submit" value="Submit")
+
+        h3 Upcoming Events
+        table
+          thead
+            tr
+              th Event Name
+              th Event When
+          tbody
+            each uEvent in uEvents
+              tr
+                td= uEvent.name
+                td= uEvent.when
+                td(colspan="2")
+                  .collapse-panel
+                    table
+                      tr
+                        th Info
+                        td= uEvent.info
+                      tr
+                        th ID
+                        td= uEvent.id
+
+        h3 Past Events
+        table
+          thead
+            tr
+              th Event Name
+              th Event When
+          tbody
+            each pEvent in pEvents
+              tr
+                td= pEvent.name
+                td= pEvent.when
+                td(colspan="2")
+                  .collapse-panel
+                    table
+                      tr
+                        th Info
+                        td= pEvent.info
+                      tr
+                        th ID
+                        td= pEvent.id
 
 include ../partials/loggedinAdmin
+script
+  include ../../public/js/adminDashboard.js
