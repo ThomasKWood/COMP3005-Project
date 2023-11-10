@@ -1,0 +1,21 @@
+.collapse-panel {
+    display: none;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.collapse-panel table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.collapse-panel table th,
+.collapse-panel table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+/* tr:hover .collapse-panel {
+    display: block;
+} */

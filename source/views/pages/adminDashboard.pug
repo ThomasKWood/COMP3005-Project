@@ -3,6 +3,8 @@ html
   head
     style
       include ../../public/stylesheet.css
+    style
+      include ../../public/collapased-table.css
     script
       include ../../public/js/adminDashboard.js
     title Admin Dashboard
@@ -27,12 +29,16 @@ html
           thead
             tr
               th Email
+              th First Name
+              th Last Name
               th Actions
           tbody
             each user in users 
               if (user.id !== sessionUser)
                 tr
                   td= user.email
+                  td= user.fname 
+                  td= user.lname
                   td
                     button.disable-button(type="button", onclick=`disableUser(${user.id})`) Disable
                     button.reset-password-button(type="button", onclick=`resetPassword(${user.id})`) Reset Password
@@ -60,30 +66,62 @@ html
       // Billing Tab
       #billing-tab.tab
         h2 Billing
-        //- h3 Create New Transaction
-        //- form#bill-form
-        //-   label(for="user-select") Select User:
-        //-   select#user-select
-        //-     option(value="user1") User 1
-        //-     option(value="user2") User 2
-        //-     // Add options for all users
-        //-   label(for="amount") Amount:
-        //-   input#amount(type="text")
-        //-   button#create-bill-button(type="button") Create Bill
+        h3 Create New Transaction
+        form(action="/create-transaction" method="POST")
+          label(for="email") Email:
+          input(type="email" id="email" name="email" placeholder="example@example.com" required)
+
+          label(for="amount") Amount:
+          input(type="number" id="amount" name="amount" placeholder="100" required)
+
+
+          label(for="type") Type:
+          input(type="text" id="type" name="type" placeholder="Subscription Renewal" required)
+
+          label(for="due-date") Due Date:
+          input(type="date" id="due-date" name="due-date" placeholder="YYYY-MM-DD" required)
+
+          input(type="submit" value="Submit")
+
 
         h3 Transaction History
         table
           thead
             tr
-              th User
-              th Amount
-              th Date
+              th Transaction ID
+              th Email
           tbody
             each transaction in transactions
               tr
-                td= transaction.user
-                td= transaction.amount
-                td= transaction.date
+                td= transaction.transaction_id
+                td= transaction.email
+                td(colspan="2")
+                  .collapse-panel
+                    table
+                      tr
+                        th Type
+                        td= transaction.type
+                      tr
+                        th Amount
+                        td= transaction.amount
+                      tr
+                        th First Name
+                        td= transaction.first_name
+                      tr
+                        th Last Name
+                        td= transaction.last_name
+                      tr
+                        th Status
+                        td= transaction.paid
+                      tr
+                        th Paid With Points
+                        td= transaction.paidbypoints
+                      tr
+                        th Points
+                        td= transaction.points
+                      tr
+                        th Date
+                        td= transaction.date
 
     //-   // Events Tab
     //-   #events-tab.tab
