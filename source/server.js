@@ -501,27 +501,25 @@ async function completeTicket(id) {
 }
 
 async function toggleUser(info) {
-  // parse info
-  let user = JSON.parse(info);
-
-  // json format
+  // object format
   // {id: 1, disabled: false}
 
   // update user disabled state
+  let result = false;
   let query = 'UPDATE public.user SET disabled = $1 WHERE id = $2';
   await db.none(query, [user.disabled, user.id]).then(() => {
     console.log('User disabled state updated successfully');
+    result = true;
     return true;
   })
   .catch(error => {
     console.log('Error updating User disabled state: ', error);
     return false;
   });
+  return result;
 }
 
 async function changePassword(info) {
-  // parse info
-  let user = JSON.parse(info);
 
   // json format
   // {id: 1, password: "password"}
@@ -833,6 +831,58 @@ app.post('/create-user', express.urlencoded({ extended: false }), async (req, re
 });
 
 
+
+
+
+// -------PUTS
+// DISABLE USER
+app.put('/disable-user/:id', express.urlencoded({ extended: false }), async (req, res) => {
+  let id = req.params.id;
+  if (Number.isInteger(parseInt(id))) {
+    id = parseInt(id);
+  }
+  let status = req.body.disabled;
+
+  // disable user
+  let result = await toggleUser({id: id, disabled: status});
+
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("User disabled successfully");
+    console.log("User disabled successfully.\n");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not disable user");
+    console.log("Could not disable user.\n");
+  }
+
+});
+// ADMIN RESET PASSWORD
+app.put('/password-reset/:id', express.urlencoded({ extended: false }), async (req, res) => {
+  let id = req.params.id;
+  if (Number.isInteger(parseInt(id))) {
+    id = parseInt(id);
+  }
+  let password = req.body.password;
+
+  // disable user
+  let result = await toggleUser({id: id, password: password});
+
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("User disabled successfully");
+    console.log("User disabled successfully.\n");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not disable user");
+    console.log("Could not disable user.\n");
+  }
+
+});
 // Test SQL connection
 db.one('SELECT $1 AS message', 'Connected to postgres database!').then(data => {console.log(data.message);}).catch(error => {console.error('Error:', error);});
 

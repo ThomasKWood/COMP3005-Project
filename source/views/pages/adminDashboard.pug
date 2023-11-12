@@ -58,8 +58,12 @@ html
                         tr 
                           th Actions:
                           td
-                            button.disable-button(type="button", onclick=`disableUser(${user.id})`) Disable
+                            if (user.disabled)
+                              button.enable-button(type="button", onclick=`toggleUser(${user.id}, false)`) Enable
+                            else
+                              button.disable-button(type="button", onclick=`toggleUser(${user.id}, true)`) Disable
                             button.reset-password-button(type="button", onclick=`resetPassword(${user.id})`) Reset Password
+
         h3 Create New User
         form(enctype="multipart/form-data" method="POST" name="create-user-form")
           label(for="email") User Email:
