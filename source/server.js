@@ -676,37 +676,6 @@ app.get('/admin-password-reset/:id', function (req, res, next) {
   }
 });
 
-// process data requests
-app.get(['/users', '/tickets', '/billing', '/events', '/exercises'], async function (req, res) {
-  if (req.url ===  '/users') {
-    let users = await getUsers();
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(users));
-  } else if (req.url === '/tickets') {
-    let tickets = await getTickets();
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(tickets));
-  } else if (req.url === '/billing') {
-    let transactions = await getTransactions();
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(transactions));
-  } else if (req.url === '/events') {
-    let upcomingEvents = await getUpcomingEvents();
-    let pastEvents = await getPastEvents();
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify({upcoming: upcomingEvents, past: pastEvents}));
-  } else if (req.url === '/exercises') {
-    let exercises = await getAllExercises();
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(exercises));
-  }
-});
-
 // process data requests with parameter
 app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/usertransactions/:id', '/userevents/:id'], async function (req, res) {
   let id = req.params.id;
