@@ -493,21 +493,30 @@ async function payTransaction(info, userID) {
 
 async function completeTicket(id) {
   // remove ticket from db
+  let result = false;
   let query = 'DELETE FROM public.ticket WHERE id = $1';
   await db.none(query, [id]).then(() => {
     console.log('Ticket removed successfully');
+    result = true;
     return true;
   })
+  .catch(error => {
+    console.log('Error updating User disabled state: ', error);
+    return false;
+  });
+  return result;
 }
 
-async function toggleUser(info) {
-  // object format
-  // {id: 1, disabled: false}
+async function toggleUser(id, state) {
+  // check it isnt SUPERUSER
+  if (id === 0) {
+    return false;
+  }
 
   // update user disabled state
   let result = false;
   let query = 'UPDATE public.user SET disabled = $1 WHERE id = $2';
-  await db.none(query, [user.disabled, user.id]).then(() => {
+  await db.none(query, [state, id]).then(() => {
     console.log('User disabled state updated successfully');
     result = true;
     return true;
@@ -519,22 +528,20 @@ async function toggleUser(info) {
   return result;
 }
 
-async function changePassword(info) {
-
-  // json format
-  // {id: 1, password: "password"}
-
+async function changePassword(id, password) {
   // update user password
   let query = 'UPDATE public.user SET password = $1 WHERE id = $2';
-  await db.none(query, [user.password, user.id]).then(() => {
+  let result = false;
+  await db.none(query, [password, id]).then(() => {
     console.log('User password updated successfully');
+    result = true;
     return true;
   })
   .catch(error => {
     console.log('Error updating User password: ', error);
     return false;
   });
-
+  return result;
 }
 
 async function updateAccount(accountInfo, userID) {
@@ -636,7 +643,38 @@ app.get('/logout', function (req, res, next) {
       res.redirect('/')
     })
   })
-})
+});
+
+// ADMIN RESET PASSWORD
+app.get('/admin-password-reset/:id', function (req, res, next) {
+  let pass = false;
+  let id = req.params.id;
+  if (Number.isInteger(parseInt(id))) {
+    id = parseInt(id);
+    pass = true;
+  }
+
+  if (pass) {
+    // for html
+    let rawRequest = req.headers.accept;
+    let requestSplit = rawRequest.split(",");
+    let request = requestSplit[0];
+    console.log("get /admin-password-reset/:id ("+request+")");
+
+    res.setHeader("Content-Type", "text/html");
+    if (req.session.user) {
+      if (req.session.admin) {
+        res.status(200);
+        res.send(pug.renderFile("./views/pages/adminPasswordReset.pug", {id: id}));
+      } else {
+        res.status(403).json({ message: "You don't have permision to access this page."});
+      }
+    } else {
+      res.status(401);
+      res.redirect('/login');
+    }
+  }
+});
 
 // process data requests
 app.get(['/users', '/tickets', '/billing', '/events', '/exercises'], async function (req, res) {
@@ -837,52 +875,98 @@ app.post('/create-user', express.urlencoded({ extended: false }), async (req, re
 // -------PUTS
 // DISABLE USER
 app.put('/disable-user/:id', express.urlencoded({ extended: false }), async (req, res) => {
+  let pass = false;
   let id = req.params.id;
   if (Number.isInteger(parseInt(id))) {
     id = parseInt(id);
+    pass = true;
   }
-  let status = req.body.disabled;
+  
+  if (pass) {
+    let status = req.body.disabled;
 
-  // disable user
-  let result = await toggleUser({id: id, disabled: status});
+    // disable user
+    let result = await toggleUser(id, status);
 
-  if (result) {
-    res.status(200);
-    res.setHeader("Content-Type", "text/plain");
-    res.send("User disabled successfully");
-    console.log("User disabled successfully.\n");
-  } else {
-    res.status(500);
-    res.setHeader("Content-Type", "text/plain");
-    res.send("Could not disable user");
-    console.log("Could not disable user.\n");
-  }
-
+    if (result) {
+      res.status(200);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("User disabled successfully");
+      console.log("User disabled successfully.\n");
+    } else {
+      res.status(500);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("Could not disable user");
+      console.log("Could not disable user.\n");
+    }
+  } 
 });
 // ADMIN RESET PASSWORD
-app.put('/password-reset/:id', express.urlencoded({ extended: false }), async (req, res) => {
+app.put('/admin-password-reset/:id', express.urlencoded({ extended: false }), async (req, res) => {
+  let pass = false;
   let id = req.params.id;
   if (Number.isInteger(parseInt(id))) {
     id = parseInt(id);
-  }
-  let password = req.body.password;
-
-  // disable user
-  let result = await toggleUser({id: id, password: password});
-
-  if (result) {
-    res.status(200);
-    res.setHeader("Content-Type", "text/plain");
-    res.send("User disabled successfully");
-    console.log("User disabled successfully.\n");
+    pass = true;
   } else {
-    res.status(500);
+    // bad request
+    res.status(400);
     res.setHeader("Content-Type", "text/plain");
-    res.send("Could not disable user");
-    console.log("Could not disable user.\n");
+    res.send("parameter id must be an integer");
   }
 
+  if (pass) {
+    let password = req.body.password;
+
+    // change user password
+    let result = await changePassword(id, password);
+
+    if (result) {
+      res.status(200);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("User password updated successfully");
+    } else {
+      res.status(500);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("Could not update user password");
+    }
+  }
 });
+
+// -------DELETE
+// DELETE TICKET
+app.delete('/complete-ticket/:id', express.urlencoded({ extended: false }), async (req, res) => {
+  let pass = false;
+  let id = req.params.id;
+  if (Number.isInteger(parseInt(id))) {
+    id = parseInt(id);
+    pass = true;
+  } else {
+    // bad request
+    res.status(400);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("parameter id must be an integer");
+  }
+
+  if (pass) {
+    // complete ticket
+    let result = await completeTicket(id);
+
+    if (result) {
+      res.status(200);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("User disabled successfully");
+      console.log("User disabled successfully.\n");
+    } else {
+      res.status(500);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("Could not disable user");
+      console.log("Could not disable user.\n");
+    }
+  }
+});
+
+
 // Test SQL connection
 db.one('SELECT $1 AS message', 'Connected to postgres database!').then(data => {console.log(data.message);}).catch(error => {console.error('Error:', error);});
 

@@ -5,6 +5,7 @@ html
       include ../../public/stylesheet.css
     style
       include ../../public/collapased-table.css
+    include ../partials/loggedinAdmin
     title Admin Dashboard
   body
     header
@@ -62,7 +63,8 @@ html
                               button.enable-button(type="button", onclick=`toggleUser(${user.id}, false)`) Enable
                             else
                               button.disable-button(type="button", onclick=`toggleUser(${user.id}, true)`) Disable
-                            button.reset-password-button(type="button", onclick=`resetPassword(${user.id})`) Reset Password
+                            a.reset(href='/admin-password-reset/'+user.id, target='_blank') Reset Password
+
 
         h3 Create New User
         form(enctype="multipart/form-data" method="POST" name="create-user-form")
@@ -85,29 +87,32 @@ html
 
       // Maintenance Tab
       #maintenance-tab.tab
-        h2 Maintenance Tickets
-        table
-          thead
-            tr
-              th Ticket ID
-              th Subject
-          tbody
-            each ticket in tickets
+        if tickets.length > 0
+          h2 Maintenance Tickets
+          table
+            thead
               tr
-                td= ticket.id
-                td= ticket.subject
-                td(colspan="2")
-                  .collapse-panel
-                    table
-                      tr
-                        th Description
-                        td= ticket.description
-                      tr
-                        th Mark as Complete
-                        td
-                          form(enctype="multipart/form-data" method="POST" name="delete-ticket-form")
-                            input(type="hidden" name="ticketId" value= ticket.id)
-                            button(type="submit") Complete
+                th Ticket ID
+                th Subject
+            tbody
+              each ticket in tickets
+                tr
+                  td= ticket.id
+                  td= ticket.subject
+                  td(colspan="2")
+                    .collapse-panel
+                      table
+                        tr
+                          th Description
+                          td= ticket.description
+                        tr
+                          th Mark as Complete
+                          td
+                            form(enctype="multipart/form-data" method="POST" name="delete-ticket-form")
+                              input(type="hidden" name="ticketId" value= ticket.id)
+                              button(type="submit") Complete
+        else
+          h2 No Maintenance Tickets
 
       // Billing Tab
       #billing-tab.tab
@@ -129,45 +134,47 @@ html
 
           input(type="submit" value="Submit")
 
-
-        h3 Transaction History
-        table
-          thead
-            tr
-              th Transaction ID
-              th Email
-          tbody
-            each transaction in transactions
+        if transactions.length > 0
+          h3 Transaction History
+          table
+            thead
               tr
-                td= transaction.transaction_id
-                td= transaction.email
-                td(colspan="2")
-                  .collapse-panel
-                    table
-                      tr
-                        th Type
-                        td= transaction.type
-                      tr
-                        th Amount
-                        td= transaction.amount
-                      tr
-                        th First Name
-                        td= transaction.first_name
-                      tr
-                        th Last Name
-                        td= transaction.last_name
-                      tr
-                        th Status
-                        td= transaction.paid
-                      tr
-                        th Paid With Points
-                        td= transaction.paidbypoints
-                      tr
-                        th Points
-                        td= transaction.points
-                      tr
-                        th Date
-                        td= transaction.date
+                th Transaction ID
+                th Email
+            tbody
+              each transaction in transactions
+                tr
+                  td= transaction.transaction_id
+                  td= transaction.email
+                  td(colspan="2")
+                    .collapse-panel
+                      table
+                        tr
+                          th Type
+                          td= transaction.type
+                        tr
+                          th Amount
+                          td= transaction.amount
+                        tr
+                          th First Name
+                          td= transaction.first_name
+                        tr
+                          th Last Name
+                          td= transaction.last_name
+                        tr
+                          th Status
+                          td= transaction.paid
+                        tr
+                          th Paid With Points
+                          td= transaction.paidbypoints
+                        tr
+                          th Points
+                          td= transaction.points
+                        tr
+                          th Date
+                          td= transaction.date
+        else 
+          h3 No Transactions     
 
       // Events Tab
       #events-tab.tab
@@ -184,30 +191,33 @@ html
           input(type="date" id="when" name="when" placeholder="YYYY-MM-DD" required)
 
           input(type="submit" value="Submit")
-
-        h3 Upcoming Events
-        table
-          thead
-            tr
-              th Event Name
-              th Event When
-          tbody
-            each uEvent in uEvents
+        if uEvents.length > 0
+          h3 Upcoming Events
+          table
+            thead
               tr
-                td= uEvent.name
-                td= uEvent.when
-                td(colspan="2")
-                  .collapse-panel
-                    table
-                      tr
-                        th Info
-                        td= uEvent.info
-                      tr
-                        th ID
-                        td= uEvent.id
+                th Event Name
+                th Event When
+            tbody
+              each uEvent in uEvents
+                tr
+                  td= uEvent.name
+                  td= uEvent.when
+                  td(colspan="2")
+                    .collapse-panel
+                      table
+                        tr
+                          th Info
+                          td= uEvent.info
+                        tr
+                          th ID
+                          td= uEvent.id
+        else
+          h3 No Upcoming Events
 
-        h3 Past Events
-        table
+        if pEvents.length > 0
+          h3 Past Events
+          table
           thead
             tr
               th Event Name
@@ -226,7 +236,7 @@ html
                       tr
                         th ID
                         td= pEvent.id
-
-include ../partials/loggedinAdmin
+        else 
+          h3 No Past Events
 script
   include ../../public/js/adminDashboard.js
