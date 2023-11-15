@@ -65,7 +65,7 @@ async function getUserTransactions(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
     return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.id = $1', [userID]);
-  } else if (typeof value === 'string') {
+  } else if (typeof userID === 'string') {
     // email lookup
     return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.email = $1', [userID]);
   } else {
@@ -79,7 +79,7 @@ async function getUser(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
     return await db.oneOrNone('SELECT * FROM public.user WHERE id = $1', [userID]);
-  } else if (typeof value === 'string') {
+  } else if (typeof userID === 'string') {
     // email lookup
     return await db.oneOrNone('SELECT * FROM public.user WHERE email = $1', [userID]);
   }
@@ -89,9 +89,9 @@ async function getUserPayment(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
     return await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [userID]);
-  } else if (typeof value === 'string') {
+  } else if (typeof userID === 'string') {
     // email lookup
-    return await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [userID]);
+    return await db.oneOrNone('SELECT * FROM public.payment WHERE email = $1', [userID]);
   }
 }
 
@@ -211,19 +211,19 @@ async function addExerciseToUser(info, userID) {
 }
 
 async function addTransaction(info) {
-  // convert info into object
-  let transaction = JSON.parse(info);
-
+  let result = false;
   // json format
   // {uid: 1, date: "2023-12-25", type: "Subscription Renewal", amount: 100, points: 100}
   let query = 'INSERT INTO public.transaction(uid, date, type, amount, points) VALUES($1, CAST($2 AS DATE), $3, $4, $5)';
-  await db.none(query, [transaction.uid, transaction.date, transaction.type, transaction.amount, transaction.points]).then(() => {
-    console.log('Data inserted successfully');
+  await db.none(query, [info.uid, info.date, info.type, info.amount, info.amount]).then(() => {
+    console.log('Transaction inserted successfully');
+    result = true;
     return true;
   }).catch(error => {
-    console.log('Error inserting data: ', error);
+    console.log('Error inserting Transaction: ', error);
     return false;
   });
+  return result;
 }
 
 async function addTicket(info) {
@@ -806,7 +806,7 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
     console.log("    could not verify user login. Incorrect format.\n");
   }
 });
-
+// CREATE USER
 app.post('/create-user', express.urlencoded({ extended: false }), async (req, res) => {
   let user = req.body;
   user.admin = req.body.admin ? true : false;
@@ -836,8 +836,37 @@ app.post('/create-user', express.urlencoded({ extended: false }), async (req, re
     console.log("Could not create user. Email already exists.\n");
   }
 });
+// CREATE TRANSACTION
+app.post('/create-transaction', express.urlencoded({ extended: false }), async (req, res) => {
+  let transaction = req.body;
+  
+  // check if email exists
+  let user = await getUser(transaction.email);
 
 
+  if (user !== null) {
+    transaction.uid = user.id;
+    // create user
+    let result = await addTransaction(transaction);
+
+    if (result) {
+      res.status(200);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("User added successfully");
+      console.log("User added successfully.\n");
+    } else {
+      res.status(500);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("Could not create user");
+      console.log("Could not create user.\n");
+    }
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Email does not exist");
+    console.log("Could not create transaction. Email does not exist.\n");
+  }
+});
 
 
 

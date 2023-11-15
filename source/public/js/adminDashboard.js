@@ -1,4 +1,7 @@
-// function to parse a form object for its names and values
+var form0 = document.forms.namedItem("create-user-form");
+var form1 = document.forms.namedItem("create-new-transaction-form");
+
+// Helper function to get form data
 function getFormData(form) {
     var elements = form.elements;
     var obj = {};
@@ -27,16 +30,42 @@ function toggleUser(userId, toggle) {
             return response.text();
         })
         .then(data => {
-            alert('User disabled successfully!');
+            if (toggle) {
+                alert('User disabled successfully!');
+            } else {
+                alert('User enabled successfully!');
+            }
         })
         .catch(error => {
             alert('Error: User could not be disabled.');
         });
 }
 
-// Listen to add a new user
-var form0 = document.forms.namedItem("create-user-form");
-console.log(form0);
+// Remove Ticket
+function completeTicket(ticketID) {
+    fetch(`/complete-ticket/${userId}`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({}),
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(data => {
+            alert('Ticket '+ticketID+': completed successfully!');
+        })
+        .catch(error => {
+            alert('Ticket '+ticketID+': could not be completed.');
+        });
+}
+
+// Form Listeners
+// Listen to add user form
 form0.addEventListener('submit', function (event) {
     event.preventDefault();
 
@@ -64,15 +93,20 @@ form0.addEventListener('submit', function (event) {
             alert('Error: Email already exists.');
         });
 });
+// Listen to billing form
+form1.addEventListener('submit', function (event) {
+    event.preventDefault();
 
-// Remove Ticket
-function completeTicket(ticketID) {
-    fetch(`/complete-ticket/${userId}`, {
-        method: "DELETE",
+    console.log("attempt to post - new transaction")
+
+    var data = getFormData(form1);
+    console.log(data);
+    fetch('/create-transaction', {
+        method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ password: password }),
+        body: JSON.stringify(data),
     })
         .then(response => {
             if (!response.ok) {
@@ -81,16 +115,14 @@ function completeTicket(ticketID) {
             return response.text();
         })
         .then(data => {
-            alert('User password changed successfully!');
+            alert('Transaction created successfully!');
         })
         .catch(error => {
-            alert('Error: User password could not be reset.');
+            alert('Error: Transaction could not be created.');
         });
-}
+});
 
-// Listen to billing form
-
-
+// Collapse Panel Functionality
 window.onload = function () {
     var rows = document.getElementsByTagName("tr");
     for (var i = 0; i < rows.length; i++) {

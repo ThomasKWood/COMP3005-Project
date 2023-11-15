@@ -49,7 +49,7 @@ CREATE TABLE "transaction" (
     type VARCHAR(255), 
     amount INT,
     points INT,
-    paidByPoints BOOLEAN,
+    paidByPoints BOOLEAN DEFAULT NULL,
     paid BOOLEAN DEFAULT FALSE
 );
 
@@ -129,6 +129,10 @@ VALUES
     (4, 2, '2023-07-10', 'Purchase', 30, 0, TRUE, TRUE),
     (5, 2, '2023-06-25', 'Refund', -20, 0, FALSE, TRUE),
     (6, 3, '2023-06-15', 'Purchase', 60, 5, FALSE, TRUE);
+
+-- INSERT INTO public."transaction" (uid, date, type, amount, points, paidByPoints, paid)
+-- VALUES
+--     (1, '2023-10-15', 'Purchase', 50, 0, FALSE, TRUE);
 
 INSERT INTO ticket (subject, description)
 VALUES 

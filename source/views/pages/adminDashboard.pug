@@ -60,9 +60,9 @@ html
                           th Actions:
                           td
                             if (user.disabled)
-                              button.enable-button(type="button", onclick=`toggleUser(${user.id}, false)`) Enable
+                              button.table-button(type="button", onclick=`toggleUser(${user.id}, false)`) Enable
                             else
-                              button.disable-button(type="button", onclick=`toggleUser(${user.id}, true)`) Disable
+                              button.table-button(type="button", onclick=`toggleUser(${user.id}, true)`) Disable
                             a.reset(href='/admin-password-reset/'+user.id, target='_blank') Reset Password
 
 
@@ -108,9 +108,7 @@ html
                         tr
                           th Mark as Complete
                           td
-                            form(enctype="multipart/form-data" method="POST" name="delete-ticket-form")
-                              input(type="hidden" name="ticketId" value= ticket.id)
-                              button(type="submit") Complete
+                            button.table-button(type="button", onclick=`completeTicket(${ticket.id})`) Complete
         else
           h2 No Maintenance Tickets
 
