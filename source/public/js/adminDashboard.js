@@ -1,5 +1,6 @@
 var form0 = document.forms.namedItem("create-user-form");
 var form1 = document.forms.namedItem("create-new-transaction-form");
+var form2 = document.forms.namedItem("create-new-event-form");
 
 // Helper function to get form data
 function getFormData(form) {
@@ -119,6 +120,35 @@ form1.addEventListener('submit', function (event) {
         })
         .catch(error => {
             alert('Error: Transaction could not be created.');
+        });
+});
+
+// Listen to create event form
+form2.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    console.log("attempt to post - new event")
+
+    var data = getFormData(form2);
+    console.log(data);
+    fetch('/create-event', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data),
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(data => {
+            alert('Event created successfully!');
+        })
+        .catch(error => {
+            alert('Error: Event could not be created.');
         });
 });
 

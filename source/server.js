@@ -50,7 +50,7 @@ function isAuthenticated (req, res, next) {
 }
 // SQL Getters
 async function getUsers() {
-  return await db.any('SELECT id, email, fname, lname, admin, joinDate, points, disabled FROM public.user');
+  return await db.any('SELECT id, email, fname, lname, admin, joinDate, points, disabled FROM fitness_user');
 }
 
 async function getTickets() {
@@ -58,16 +58,16 @@ async function getTickets() {
 }
 
 async function getTransactions() {
-  return await db.any('SELECT t.id AS transaction_id, u.fname AS first_name, u.lname AS last_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id');
+  return await db.any('SELECT t.id AS transaction_id, u.fname AS first_name, u.lname AS last_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM user_transaction t JOIN fitness_user u ON t.uid = u.id');
 }
 
 async function getUserTransactions(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
-    return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.id = $1', [userID]);
+    return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM user_transaction t JOIN fitness_user u ON t.uid = u.id WHERE u.id = $1', [userID]);
   } else if (typeof userID === 'string') {
     // email lookup
-    return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM public.transaction t JOIN public.user u ON t.uid = u.id WHERE u.email = $1', [userID]);
+    return await db.any('SELECT t.id AS transaction_id, CONCAT(u.fname, \' \', u.lname) AS full_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM user_transaction t JOIN fitness_user u ON t.uid = u.id WHERE u.email = $1', [userID]);
   } else {
     console.log('got a bad parameter for getUserTransactions()');
     return null;
@@ -78,37 +78,37 @@ async function getUserTransactions(userID) {
 async function getUser(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
-    return await db.oneOrNone('SELECT * FROM public.user WHERE id = $1', [userID]);
+    return await db.oneOrNone('SELECT * FROM fitness_user WHERE id = $1', [userID]);
   } else if (typeof userID === 'string') {
     // email lookup
-    return await db.oneOrNone('SELECT * FROM public.user WHERE email = $1', [userID]);
+    return await db.oneOrNone('SELECT * FROM fitness_user WHERE email = $1', [userID]);
   }
 }
 // get user payment by id or email
 async function getUserPayment(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
-    return await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [userID]);
+    return await db.oneOrNone('SELECT * FROM payment WHERE uid = $1', [userID]);
   } else if (typeof userID === 'string') {
     // email lookup
-    return await db.oneOrNone('SELECT * FROM public.payment WHERE email = $1', [userID]);
+    return await db.oneOrNone('SELECT * FROM payment WHERE email = $1', [userID]);
   }
 }
 
 async function getUpcomingEvents() {
-  return await db.any('SELECT * FROM public.event WHERE "when" >= NOW() ORDER BY "when" ASC');
+  return await db.any('SELECT * FROM fitness_event WHERE "when" >= NOW() ORDER BY "when" ASC');
 }
 
 async function getPastEvents() {
-  return await db.any('SELECT * FROM public.event WHERE "when" < NOW() ORDER BY "when" DESC');
+  return await db.any('SELECT * FROM fitness_event WHERE "when" < NOW() ORDER BY "when" DESC');
 }
 
 async function getEventRSVP(eventID) { 
   // SELECT CONCAT(u.fname, ' ', u.lname) AS full_name, u.email
   // FROM rsvpactivities AS ra
-  // JOIN public.user AS u ON ra.uid = u.id
+  // JOIN user AS u ON ra.uid = u.id
   // WHERE ra.aid = 1;
-  return await db.any('SELECT CONCAT(u.fname, \' \', u.lname) AS full_name, u.email FROM rsvpactivities AS ra JOIN public.user AS u ON ra.uid = u.id WHERE ra.aid = $1', [eventID]);
+  return await db.any('SELECT CONCAT(u.fname, \' \', u.lname) AS full_name, u.email FROM rsvpactivities AS ra JOIN fitness_user AS u ON ra.uid = u.id WHERE ra.aid = $1', [eventID]);
 }
 
 async function getRSVPevents(userID) {
@@ -125,16 +125,16 @@ async function getAllExercises() {
 async function getAddedExercises(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
-    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN public.user AS u ON ea.uid = u.id WHERE u.id = $1', [userID]);
+    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN fitness_user AS u ON ea.uid = u.id WHERE u.id = $1', [userID]);
 
     // SELECT e.id AS exercise_id, e.name, e.info, e.link
     // FROM exercise AS e
     // JOIN exerciseadded AS ea ON e.id = ea.eid
-    // JOIN public.user AS u ON ea.uid = u.id
+    // JOIN user AS u ON ea.uid = u.id
     // WHERE u.email = 'user1@example.com';
   } else if (typeof value === 'string') {
     // email lookup
-    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN public.user AS u ON ea.uid = u.id WHERE u.email = $1', [userID]);
+    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN fitness_user AS u ON ea.uid = u.id WHERE u.email = $1', [userID]);
   } else {
     console.log('got a bad parameter for getAddedExercises()');
     return null;
@@ -143,7 +143,7 @@ async function getAddedExercises(userID) {
 
 async function getEmailExists(email) {
   // check if email exists
-  let result = await db.oneOrNone('SELECT * FROM public.user WHERE email = $1', [email]);
+  let result = await db.oneOrNone('SELECT * FROM fitness_user WHERE email = $1', [email]);
 
   if (result) {
     return true;
@@ -153,23 +153,22 @@ async function getEmailExists(email) {
 }
 
 // SQL Setters
-async function addEvent(info) {
-  // convert info into object
-  let event = JSON.parse(info);
-
-  // json format
+async function addEvent(event) {
   // {name: "event1", info: "this event is cool", when: "2020-12-12 12:00:00"}
   
   // insert into db
-  let query = 'INSERT INTO public.event(name, info, \"when\") VALUES($1, $2, CAST($3 AS DATE))';
+  let result = false;
+  let query = 'INSERT INTO fitness_event(name, info, \"when\") VALUES($1, $2, CAST($3 AS DATE))';
   await db.none(query, [event.name, event.info, event.when]).then(() => {
     console.log('Data inserted successfully');
+    result = true;
     return true;
   })
   .catch(error => {
     console.log('Error inserting data: ', error);
     return false;
   });
+  return result;
 }
 
 async function addNewExercise(info) {
@@ -180,7 +179,7 @@ async function addNewExercise(info) {
   // {name: "exercise1", info: {stpes: ["step1", "step2", "step3"], muscles: ["back", "shoulders"]}, link: "http://linktogifofexercise.com"}
 
   // insert into db
-  let query = 'INSERT INTO public.exercise(name, info, link) VALUES($1, $2, $3)';
+  let query = 'INSERT INTO exercise(name, info, link) VALUES($1, $2, $3)';
   await db.none(query, [exercise.name, exercise.info, exercise.link]).then(() => {
     console.log('Data inserted successfully');
     return true;
@@ -199,7 +198,7 @@ async function addExerciseToUser(info, userID) {
   // {exercise: 2, user: 1}
 
   // insert into db
-  let query = 'INSERT INTO public.exerciseadded(eid, uid) VALUES($1, $2)';
+  let query = 'INSERT INTO exerciseadded(eid, uid) VALUES($1, $2)';
   await db.none(query, [exercise.exercise, userID]).then(() => {
     console.log('Data inserted successfully');
     return true;
@@ -214,7 +213,7 @@ async function addTransaction(info) {
   let result = false;
   // json format
   // {uid: 1, date: "2023-12-25", type: "Subscription Renewal", amount: 100, points: 100}
-  let query = 'INSERT INTO public.transaction(uid, date, type, amount, points) VALUES($1, CAST($2 AS DATE), $3, $4, $5)';
+  let query = 'INSERT INTO user_transaction(uid, date, type, amount, points) VALUES($1, CAST($2 AS DATE), $3, $4, $5)';
   await db.none(query, [info.uid, info.date, info.type, info.amount, info.amount]).then(() => {
     console.log('Transaction inserted successfully');
     result = true;
@@ -234,7 +233,7 @@ async function addTicket(info) {
   // {subject: "Treadmil 5 INOP", description: "Machine has power but motor does not move belt."}
 
   // insert into db
-  let query = 'INSERT INTO public.ticket(subject, description) VALUES($1, $2)';
+  let query = 'INSERT INTO ticket(subject, description) VALUES($1, $2)';
   await db.none(query, [ticket.subject, ticket.description]).then(() => {
     console.log('Data inserted successfully');
     return true;
@@ -252,7 +251,7 @@ async function addActivity(info) {
   // {name: "Yoga Class", info: "this activity is cool", when: "2020-12-24 12:00:00"}
 
   // insert into db
-  let query = 'INSERT INTO public.activity(name, info, \"when\") VALUES($1, $2, CAST($3 AS DATE))';
+  let query = 'INSERT INTO activity(name, info, \"when\") VALUES($1, $2, CAST($3 AS DATE))';
   await db.none(query, [activity.name, activity.info, activity.when]).then(() => {
     console.log('Data inserted successfully');
     return true;
@@ -262,22 +261,34 @@ async function addActivity(info) {
   });
 }
 
-async function addRSVP(info) {
-  // convert info into object
-  let rsvp = JSON.parse(info);
-
+async function addRSVP(uid, aid, status) {
   // json format
   // {aid: 1, uid: 1}
-
-  // insert into db
-  let query = 'INSERT INTO public.rsvpactivities(aid, uid) VALUES($1, $2)';
-  await db.none(query, [rsvp.aid, rsvp.uid]).then(() => {
-    console.log('Data inserted successfully');
-    return true;
-  }).catch(error => {
-    console.log('Error inserting data: ', error);
-    return false;
-  });
+  let result = false;
+  if (status) {
+    // insert into db
+    let query = 'INSERT INTO rsvpactivities(aid, uid) VALUES($1, $2)';
+    await db.none(query, [aid, uid]).then(() => {
+      result = true;
+      console.log('RSVP added successfully');
+      return true;
+    }).catch(error => {
+      console.log('Error inserting RSVP: ', error);
+      return false;
+    });
+  } else {
+    // remove from db
+    let query = 'DELETE FROM rsvpactivities WHERE aid = $1 AND uid = $2';
+    await db.none(query, [aid, uid]).then(() => {
+      console.log('RSVP removed successfully');
+      result = true;
+      return true;
+    }).catch(error => {
+      console.log('Error removing RSVP: ', error);
+      return false;
+    });
+  }
+  return result;
 }
 
 async function addPayment(info, userID) {
@@ -288,7 +299,7 @@ async function addPayment(info, userID) {
   // {uid: 1, type: "Visa", number: "123456789", expiryYear: 2023, expiryMonth: 12, cvc: 123, name: "John Smith"}
 
   // check if payment already exists
-  let result = await db.oneOrNone('SELECT * FROM public.payment WHERE uid = $1', [userID]);
+  let result = await db.oneOrNone('SELECT * FROM payment WHERE uid = $1', [userID]);
 
   let curDate = new Date();
   let curYear = curDate.getFullYear();
@@ -310,7 +321,7 @@ async function addPayment(info, userID) {
 
     if (acceptUpdate) {
       // update payment
-      let query = 'UPDATE public.payment SET type = $1, number = $2, expiryYear = $3, expiryMonth = $4, cvc = $5, name = $6 WHERE uid = $7';
+      let query = 'UPDATE payment SET type = $1, number = $2, expiryYear = $3, expiryMonth = $4, cvc = $5, name = $6 WHERE uid = $7';
       await db.none(query, [payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name, userID]).then(() => {
         console.log('Payment updated successfully');
         return true;
@@ -336,7 +347,7 @@ async function addPayment(info, userID) {
 
     if (acceptUpdate) {
       // update payment
-      let query = 'INSERT INTO public.payment(uid, type, number, expiryYear, expiryMonth, cvc, name) VALUES($1, $2, $3, $4, $5, $6, $7)';
+      let query = 'INSERT INTO payment(uid, type, number, expiryYear, expiryMonth, cvc, name) VALUES($1, $2, $3, $4, $5, $6, $7)';
       await db.none(query, [userID, payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name]).then(() => {
         console.log('Payment updated successfully');
         return true;
@@ -358,7 +369,7 @@ async function addUser(info) {
   
   // insert into db
   let result = false;
-  let query = 'INSERT INTO public.user(fname, lname, email, password, admin) VALUES($1, $2, $3, $4, $5)';
+  let query = 'INSERT INTO fitness_user(fname, lname, email, password, admin) VALUES($1, $2, $3, $4, $5)';
   await db.none(query, [info.fname, info.lname, info.email, info.password, info.admin]).then(() => {
     console.log('Data inserted successfully');
     result = true;
@@ -379,7 +390,7 @@ async function updateLastdone(info, userID) {
   // json format
   // {exercise: 2, user: 1, lastDone: "2020-12-12 12:00:00"}
 
-  let query = 'UPDATE public.exerciseadded SET lastdone = CAST($1 AS DATE) WHERE eid = $2 AND uid = $3';
+  let query = 'UPDATE exerciseadded SET lastdone = CAST($1 AS DATE) WHERE eid = $2 AND uid = $3';
   await db.none(query, [exercise.lastDone, exercise.exercise, userID]).then(() => {
     console.log('Data updated successfully');
     return true;
@@ -405,7 +416,7 @@ async function payTransaction(info, userID) {
     if (user.points >= transaction.amount) {
       // user has enough points
       // update user points
-      let query = 'UPDATE public.user SET points = $1 WHERE id = $2';
+      let query = 'UPDATE fitness_user SET points = $1 WHERE id = $2';
       await db.none(query, [(user.points - transaction.amount) + transaction.points, userID]).then(() => {
         console.log('User points updated successfully');
         return true;
@@ -419,7 +430,7 @@ async function payTransaction(info, userID) {
         return 0;
       }
       // update transaction
-      let query2 = 'UPDATE public.transaction SET paid = true WHERE id = $1';
+      let query2 = 'UPDATE user_transaction SET paid = true WHERE id = $1';
       await db.none(query2, [transaction.id]).then(() => {
         console.log('Transaction updated successfully');
         return true;
@@ -461,7 +472,7 @@ async function payTransaction(info, userID) {
     }
 
     // update transaction to paid
-    let query = 'UPDATE public.transaction SET paid = true WHERE id = $1';
+    let query = 'UPDATE user_transaction SET paid = true WHERE id = $1';
     await db.none(query, [transaction.id]).then(() => {
       console.log('Transaction updated successfully');
       return true;
@@ -475,7 +486,7 @@ async function payTransaction(info, userID) {
     }
 
     // update user points
-    let query2 = 'UPDATE public.user SET points = $1 WHERE id = $2';
+    let query2 = 'UPDATE fitness_user SET points = $1 WHERE id = $2';
     await db.none(query2, [user.points + transaction.points, userID]).then(() => {
       console.log('Transaction updated successfully');
       return true;
@@ -494,7 +505,7 @@ async function payTransaction(info, userID) {
 async function completeTicket(id) {
   // remove ticket from db
   let result = false;
-  let query = 'DELETE FROM public.ticket WHERE id = $1';
+  let query = 'DELETE FROM ticket WHERE id = $1';
   await db.none(query, [id]).then(() => {
     console.log('Ticket removed successfully');
     result = true;
@@ -515,7 +526,7 @@ async function toggleUser(id, state) {
 
   // update user disabled state
   let result = false;
-  let query = 'UPDATE public.user SET disabled = $1 WHERE id = $2';
+  let query = 'UPDATE fitness_user SET disabled = $1 WHERE id = $2';
   await db.none(query, [state, id]).then(() => {
     console.log('User disabled state updated successfully');
     result = true;
@@ -530,7 +541,7 @@ async function toggleUser(id, state) {
 
 async function changePassword(id, password) {
   // update user password
-  let query = 'UPDATE public.user SET password = $1 WHERE id = $2';
+  let query = 'UPDATE fitness_user SET password = $1 WHERE id = $2';
   let result = false;
   await db.none(query, [password, id]).then(() => {
     console.log('User password updated successfully');
@@ -549,7 +560,7 @@ async function updateAccount(accountInfo, userID) {
   let ai = JSON.parse(accountInfo);
 
   // insert object into db
-  let query = 'UPDATE public.user SET accountinfo = $1 WHERE id = $2';
+  let query = 'UPDATE fitness_user SET accountinfo = $1 WHERE id = $2';
   await db.none(query, [ai, userID]).then(() => {
     console.log('User account info updated successfully');
     return true;
@@ -565,7 +576,7 @@ async function updateGoals(goals, userID) {
   let g = JSON.parse(goals);
 
   // insert object into db
-  let query = 'UPDATE public.user SET goals = $1 WHERE id = $2';
+  let query = 'UPDATE fitness_user SET goals = $1 WHERE id = $2';
   await db.none(query, [g, userID]).then(() => {
     console.log('User goals updated successfully');
     return true;
@@ -589,22 +600,24 @@ app.get(['/', '/home'], async function (req, res) {
   let rawRequest = req.headers.accept;
   let requestSplit = rawRequest.split(",");
   let request = requestSplit[0];
-  console.log("get /home ("+request+")");
+  console.log("get /home (" + request + ")");
   console.log(req.session);
 
   res.status(200);
   res.setHeader("Content-Type", "text/html");
   if (req.session.user && !req.session.admin) {
-      res.send(pug.renderFile("./views/pages/home.pug", {loggedin: true}));
+    res.send(pug.renderFile("./views/pages/home.pug", { loggedin: true }));
   } else if (!req.session.admin) {
-      res.send(pug.renderFile("./views/pages/home.pug", {loggedin: false}));
+    res.send(pug.renderFile("./views/pages/home.pug", { loggedin: false }));
   } else if (req.session.user && req.session.admin) {
-      let users = await getUsers();
-      let tickets = await getTickets();
-      let transactions = await getTransactions();
-      let uEvents = await getUpcomingEvents();
-      let pEvents = await getPastEvents();
-      res.send(pug.renderFile("./views/pages/adminDashboard.pug", {sessionUser: req.session.userID, users: users, tickets: tickets, transactions: transactions, uEvents: uEvents, pEvents: pEvents}));
+    let users = await getUsers();
+    let tickets = await getTickets();
+    let transactions = await getTransactions();
+    let uEvents = await getUpcomingEvents();
+    let pEvents = await getPastEvents();
+    res.send(pug.renderFile("./views/pages/adminDashboard.pug", { sessionUser: req.session.userID, users: users, tickets: tickets, transactions: transactions, uEvents: uEvents, pEvents: pEvents }));
+  } else if (req.session.user) {
+    res.send(pug.renderFile("./views/pages/home.pug", { loggedin: true }));
   }
 });
 // LOGIN
@@ -695,10 +708,49 @@ app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/user
     res.setHeader("Content-Type", "application/json");
     res.send(JSON.stringify(payMethod));
   } else if (req.originalUrl.includes('/event/')) {
-    let eventAttendes = await getEventRSVP(id);
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(eventAttendes));
+    // get event / check if exists
+    let event = await db.oneOrNone('SELECT * FROM fitness_event WHERE id = $1', [id]);
+    if (event === null) {
+      res.status(404);
+      res.setHeader("Content-Type", "text/plain");
+      res.send("Event not found");
+      console.log("Event not found.\n");
+      return;
+    }
+
+    // handle admin request
+    if (req.session.admin) {
+      let rsvp = await getEventRSVP(id);
+      event.rsvp = rsvp;
+      res.status(200);
+      res.send(pug.renderFile("./views/pages/event.pug", {event: event, admin: true}));
+    // handle user request
+    } else if (req.session.user) {
+      // determine if user is RSVP'd
+      let rsvp = await getEventRSVP(id);
+      let rsvpBool = false;
+      for (let i = 0; i < rsvp.length; i++) {
+        if (rsvp[i].email === req.session.user) {
+          rsvpBool = true;
+        }
+      }
+
+      // check if date has passed.
+      let curDate = new Date();
+      let eventDate = new Date(event.when);
+      if (curDate > eventDate) {
+        // event has passed
+        res.status(200);
+        res.send(pug.renderFile("./views/pages/event.pug", {event: event, loggedin: true, rsvp: rsvpBool, eventPassed: true}));
+      } else {
+        // event has not passed
+        res.status(200);
+        res.send(pug.renderFile("./views/pages/event.pug", {event: event, loggedin: true, rsvp: rsvpBool}));
+      }
+    } else {
+      res.status(200);
+      res.send(pug.renderFile("./views/pages/event.pug", {event: event, loggedin: false}));
+    }
   } else if (req.originalUrl.includes('/userexercises/')) {
     let addedExercises = await getAddedExercises(id);
     res.status(200);
@@ -746,7 +798,7 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
       let password = req.body.password;
 
       try {
-        let user = await db.oneOrNone('SELECT * FROM public.user WHERE email = $1', [username]);
+        let user = await db.oneOrNone('SELECT * FROM fitness_user WHERE email = $1', [username]);
 
         if (!user) {
           response = true;
@@ -867,7 +919,24 @@ app.post('/create-transaction', express.urlencoded({ extended: false }), async (
     console.log("Could not create transaction. Email does not exist.\n");
   }
 });
+// CREATE EVENT
+app.post('/create-event', express.urlencoded({ extended: false }), async (req, res) => {
+  let event = req.body;
 
+  // create event
+  let result = await addEvent(event);
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Event added successfully");
+    console.log("Event added successfully.\n");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not create event");
+    console.log("Could not create event.\n");
+  }
+});
 
 
 // -------PUTS
@@ -928,6 +997,20 @@ app.put('/admin-password-reset/:id', express.urlencoded({ extended: false }), as
       res.setHeader("Content-Type", "text/plain");
       res.send("Could not update user password");
     }
+  }
+});
+// USER RSVP
+app.put('/rsvp-event', express.urlencoded({ extended: false }), async (req, res) => {
+  let result = await addRSVP(req.session.userID, req.body.aid, req.body.status);
+
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("RSVP updated successfully");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not update RSVP status");
   }
 });
 

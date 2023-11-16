@@ -1,0 +1,42 @@
+doctype html
+html
+    head
+        style
+            include ../../public/stylesheet.css
+        if admin
+            include ../partials/loggedinAdmin
+        else if loggedin
+            include ../partials/loggedin
+            script
+                include ../../public/js/event.js
+        else
+            include ../partials/loggedout
+        title #{event.name}
+    body
+        h2 #{event.name} 
+        p #{event.when}
+        p #{event.info}
+        if admin
+            h3 Attendees
+            if event.rsvp.length === 0
+                p No one has RSVP'd to this event yet.
+            else
+                table
+                    thead
+                        tr
+                            th Name
+                            th Email
+                    tbody
+                        each user in event.rsvp
+                            tr
+                                td= user.full_name
+                                td= user.email
+        else if loggedin && !eventPassed
+            if !rsvp
+                button.button(type="button", onclick='rsvp(true, '+event.id+')') RSVP
+            else
+                button.button(type="button", onclick='rsvp(false, '+event.id+')') Un-RSVP
+        else if eventPassed
+            h5 This event has already passed.
+        else if !loggedin
+            h5 You must be logged in to RSVP to this event.

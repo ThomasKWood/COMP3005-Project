@@ -123,12 +123,11 @@ html
           label(for="amount") Amount:
           input(type="number" id="amount" name="amount" placeholder="100" required)
 
-
           label(for="type") Type:
           input(type="text" id="type" name="type" placeholder="Subscription Renewal" required)
 
-          label(for="due-date") Due Date:
-          input(type="date" id="due-date" name="due-date" placeholder="YYYY-MM-DD" required)
+          label(for="date") Due Date:
+          input(type="date" id="date" name="date" placeholder="YYYY-MM-DD" required)
 
           input(type="submit" value="Submit")
 
@@ -178,7 +177,7 @@ html
       #events-tab.tab
         h2 Events
         h3 Create New Event
-        form(action="/create-event" method="POST")
+        form(method="POST" name="create-new-event-form")
           label(for="name") Event Name:
           input(type="text" id="name" name="name" placeholder="Wednesday Yoga Class" required)
 
@@ -196,44 +195,34 @@ html
               tr
                 th Event Name
                 th Event When
+                th Event Details
             tbody
               each uEvent in uEvents
                 tr
                   td= uEvent.name
                   td= uEvent.when
-                  td(colspan="2")
-                    .collapse-panel
-                      table
-                        tr
-                          th Info
-                          td= uEvent.info
-                        tr
-                          th ID
-                          td= uEvent.id
+                  td
+                    a.table-link(href='/event/'+uEvent.id, target='_blank') View Event
         else
           h3 No Upcoming Events
 
         if pEvents.length > 0
           h3 Past Events
           table
-          thead
-            tr
-              th Event Name
-              th Event When
-          tbody
-            each pEvent in pEvents
+            thead
               tr
-                td= pEvent.name
-                td= pEvent.when
-                td(colspan="2")
-                  .collapse-panel
-                    table
-                      tr
-                        th Info
-                        td= pEvent.info
-                      tr
-                        th ID
-                        td= pEvent.id
+                th Event Name
+                th Event Date
+                th Event Details
+
+            tbody
+              each pEvent in pEvents
+                tr
+                  td= pEvent.name
+                  td= pEvent.when
+                  td
+                    a.table-link(href='/event/'+pEvent.id, target='_blank') View Event
+              
         else 
           h3 No Past Events
 script
