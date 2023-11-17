@@ -2,19 +2,6 @@ var form0 = document.forms.namedItem("create-user-form");
 var form1 = document.forms.namedItem("create-new-transaction-form");
 var form2 = document.forms.namedItem("create-new-event-form");
 
-// Helper function to get form data
-function getFormData(form) {
-    var elements = form.elements;
-    var obj = {};
-    for (var i = 0; i < elements.length; i++) {
-        var item = elements.item(i);
-        if (item.name) {
-            obj[item.name] = item.value;
-        }
-    }
-    return obj;
-}
-
 // Function to disable a user
 function toggleUser(userId, toggle) {
     fetch(`/disable-user/${userId}`, {
@@ -151,18 +138,3 @@ form2.addEventListener('submit', function (event) {
             alert('Error: Event could not be created.');
         });
 });
-
-// Collapse Panel Functionality
-window.onload = function () {
-    var rows = document.getElementsByTagName("tr");
-    for (var i = 0; i < rows.length; i++) {
-        rows[i].addEventListener("click", function () {
-            var panel = this.querySelector(".collapse-panel");
-            if (panel.style.display === "none") {
-                panel.style.display = "block";
-            } else {
-                panel.style.display = "none";
-            }
-        });
-    }
-};

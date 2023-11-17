@@ -1,0 +1,200 @@
+doctype html
+html
+  head
+    style
+      include ../../public/stylesheet.css
+    style
+      include ../../public/collapased-table.css 
+    script.
+      let goals = !{JSON.stringify(user.goals)};   
+    include ../partials/loggedin  
+    title Dashboard
+    body
+      header
+        h1 Hi #{user.fname}!
+    nav
+      ul
+        li
+          a(href="#exercises-tab") Exercises
+        li
+          a(href="#goals-tab") Goals
+        li
+          a(href="#events-tab") Events
+        li
+          a(href="#billing-tab") Billing
+        li
+          a(href="#maintenance-tab") Report An Issue
+    .tab-content
+      // Exersises Tab
+      #exercises-tab.tab
+        h2 Exercises
+        if addedExercises.length > 0
+          table
+            thead
+              tr
+                th Exercise
+                th Last Done
+                th Actions
+                th
+
+            tbody
+              each exercise in addedExercises
+                tr
+                  td= exercise.name
+                  td= exercise.lastdone
+                  td
+                    button.table-button(type="button", onclick=`completeExercise(${exercise.id})`) Complete
+                    button.table-button(type="button", onclick=`removeExercise(${exercise.id})`) Remove
+                  td
+                    a(href='/exercise/'+exercise.id) View Exercise
+        else
+          h3 You have not added any exercises.
+
+        if otherExercises.length > 0
+          table
+            thead
+              tr
+                th Exercise
+                th Actions
+                th 
+
+            tbody
+              each exercise in otherExercises
+                tr
+                  td= exercise.name
+                  td
+                    button.table-button(type="button", onclick=`addExercise(${exercise.id})`) Add Exercise
+                  td
+                    a(href='/exercise/'+exercise.id) View Exercise
+        else
+          h3 There are no exercises left to add.
+       
+      // goals Tab
+      #goals-tab.tab
+        // Goal Form
+        h2 Set A New Goal:
+        form(method="POST" name="create-goal")
+          label(for="name") Goal Name
+          input(type="text", name="name", id="name", placeholder="" required)
+          label(for="value") Goal Value
+          input(type="text", name="value", id="value", placeholder="What is your goal?" required)
+          input(type="submit", value="Submit")
+
+        h2 You're fitness goals:
+        if user.goals.goals.length > 0
+          table
+            thead
+              tr
+                th Goal Name
+                th Goal Value
+                th 
+            tbody
+              each goal in user.goals.goals
+                if !goal.completed
+                  tr
+                    td= goal.name
+                    td= goal.value
+                    td
+                      button.table-button(type="button", onclick=`goal(${goal.id})`) Complete
+          h3 Completed Goals:
+          table
+            thead
+              tr
+                th Goal Name
+                th Goal Value
+                th 
+            tbody
+              each goal in user.goals.goals
+                if goal.completed
+                  tr
+                    td= goal.name
+                    td= goal.value
+                    td= "Goal Completed!"
+        else
+          h3 You have not set any goals.
+
+      // Events Tab
+      #events-tab.tab
+        h2 Events
+        if uEvents.length > 0
+          h3 Upcoming Events
+          table
+            thead
+              tr
+                th Event Name
+                th Event When
+                th Event Details
+            tbody
+              each uEvent in uEvents
+                tr
+                  td= uEvent.name
+                  td= uEvent.when
+                  td
+                    a.table-link(href='/event/'+uEvent.id, target='_blank') View Event
+        else
+          h3 No Upcoming Events
+
+        if pEvents.length > 0
+          h3 Past Events
+          table
+            thead
+              tr
+                th Event Name
+                th Event Date
+                th Event Details
+
+            tbody
+              each pEvent in pEvents
+                tr
+                  td= pEvent.name
+                  td= pEvent.when
+                  td
+                    a.table-link(href='/event/'+pEvent.id, target='_blank') View Event
+              
+        else 
+          h3 No Past Events
+
+      // Billing Tab
+      #billing-tab.tab
+        h2 Points Balance
+        h3 #{user.points} Points
+        h2 Billing
+        if transactions.length > 0
+          h3 Your Transaction History
+          table
+            thead
+              tr
+                th
+                th Type
+                th Date 
+                th Amount
+                th
+            tbody
+              each transaction, index in transactions
+                tr
+                  td= index + 1
+                  td= transaction.type
+                  td= transaction.date 
+                  td= transaction.amount
+                  if !transaction.paid
+                    td
+                      a(href='/pay/'+transaction.id) Pay
+                  else 
+                    td Paid
+
+        else 
+          h3 You have no transactions.  
+      // Maintenance Tab   
+      #maintenance-tab.tab
+        h2 Report An Issue
+        form(method="POST" name="create-ticket")
+          label(for="subject") Issue
+          input(type="text", name="subject", id="subject" required)
+          label(for="description") Description
+          textarea(name="description", id="description" required)
+          input(type="submit", value="Submit")
+      
+script
+  include ../../public/js/shared/collectForm.js
+  include ../../public/js/userDashboard.js
+  include ../../public/js/shared/collapsePanel.js 

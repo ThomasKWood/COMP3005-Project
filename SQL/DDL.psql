@@ -100,8 +100,8 @@ VALUES (0, 'su', 'password', 'Super', 'User', true);
 -- Regular Users
 INSERT INTO fitness_user (email, password, fName, lName, admin, accountInfo, goals, points)
 VALUES
-    ('user1@example.com', 'password1hash', 'John', 'Doe', false, '{"height": 175,"weight": 70,"dateOfBirth": "1990-01-15"}', '{"goals": [{"name": "Goal 1","value": 100,"completed": true},{"name": "Goal 2","value": 200,"completed": false},{"name": "Goal 3","value": 150,"completed": true}]}', 100),
-    ('user2@example.com', 'password2hash', 'Jane', 'Smith', false, '{"height": 180, "weight": 75, "dateOfBirth": "1995-05-20"}', '{"goals": [{"name": "New Year Resolution", "value": 50, "completed": false}, {"name": "Fitness Milestone", "value": 300, "completed": true}, {"name": "Personal Achievement", "value": 120, "completed": false}]}', 50);
+    ('user1@example.com', 'password1hash', 'John', 'Doe', false, '{"height": 175,"weight": 70,"dateOfBirth": "1990-01-15"}', '{"goals": [{"id": 1, "name": "Goal 1","value": "Do 10 Pushups","completed": true},{"id": 2, "name": "Goal 2","value": "Do 20 Situps","completed": false},{"id": 3, "name": "Goal 3","value": "Do 30 Jumping Jacks","completed": true}]}', 100),
+    ('user2@example.com', 'password2hash', 'Jane', 'Smith', false, '{"height": 180, "weight": 75, "dateOfBirth": "1995-05-20"}', '{"goals": [{"id": 1, "name": "New Year Resolution", "value": "Go to the gym once a week for a month.", "completed": false}, {"id": 2, "name": "Fitness Milestone", "value": "Bench 140 pounds.", "completed": true}, {"id": 3, "name": "Personal Achievement", "value": "Reach 200 pounds.", "completed": false}]}', 50);
 INSERT INTO fitness_user (email, password, fName, lName)
     VALUES ('user3@example.com', 'password3hash', 'Bob', 'Johnson'); -- Blank User
 

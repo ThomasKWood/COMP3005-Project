@@ -118,25 +118,35 @@ async function getRSVPevents(userID) {
   return await db.any('SELECT aid FROM rsvpactivities WHERE uid = $1', [userID]);
 }
 
-async function getAllExercises() {
-  return await db.any('SELECT * FROM exercise');
+// Get exercise by ID
+async function getExercise(id) {
+  return await db.oneOrNone('SELECT * FROM exercise WHERE id = $1', [id]);
 }
 
-async function getAddedExercises(userID) {
+// Get exercises not added by user
+async function getExercisesNotAdded(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
-    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN fitness_user AS u ON ea.uid = u.id WHERE u.id = $1', [userID]);
-
-    // SELECT e.id AS exercise_id, e.name, e.info, e.link
-    // FROM exercise AS e
-    // JOIN exerciseadded AS ea ON e.id = ea.eid
-    // JOIN user AS u ON ea.uid = u.id
-    // WHERE u.email = 'user1@example.com';
+    return await db.any('SELECT id, name FROM exercise WHERE id NOT IN (SELECT eid FROM exerciseadded WHERE uid = $1)', [userID]);
   } else if (typeof value === 'string') {
     // email lookup
-    return await db.any('SELECT e.id AS exercise_id, e.name, e.info, e.link FROM exercise AS e JOIN exerciseadded AS ea ON e.id = ea.eid JOIN fitness_user AS u ON ea.uid = u.id WHERE u.email = $1', [userID]);
+    return await db.any('SELECT id, name FROM exercise WHERE id NOT IN (SELECT eid FROM exerciseadded WHERE uid = (SELECT id FROM fitness_user WHERE email = \'$1\'))', [userID]);
   } else {
-    console.log('got a bad parameter for getAddedExercises()');
+    console.log('got a bad parameter for getExercisesNotAdded()');
+    return null;
+  }
+}
+
+// Get exercises added by user
+async function getExercisesAdded(userID) {
+  if (typeof userID === 'number' && Number.isInteger(userID)) {
+    // id lookup
+    return await db.any('SELECT e.id, e.name, ea.lastdone FROM exercise e JOIN exerciseadded ea ON e.id = ea.eid WHERE ea.uid = (SELECT eid FROM exerciseadded WHERE uid = $1)', [userID]);
+  } else if (typeof value === 'string') {
+    // email lookup
+    return await db.any('SELECT e.id, e.name, ea.lastdone FROM exercise e JOIN exerciseadded ea ON e.id = ea.eid WHERE ea.uid = (SELECT id FROM fitness_user WHERE email = \'$1\')', [userID]);
+  } else {
+    console.log('got a bad parameter for getExercisesNotAdded()');
     return null;
   }
 }
@@ -226,21 +236,20 @@ async function addTransaction(info) {
 }
 
 async function addTicket(info) {
-  // convert info into object
-  let ticket = JSON.parse(info);
-
-  // json format
   // {subject: "Treadmil 5 INOP", description: "Machine has power but motor does not move belt."}
 
   // insert into db
+  let result = false;
   let query = 'INSERT INTO ticket(subject, description) VALUES($1, $2)';
-  await db.none(query, [ticket.subject, ticket.description]).then(() => {
-    console.log('Data inserted successfully');
+  await db.none(query, [info.subject, info.description]).then(() => {
+    console.log('Ticket inserted successfully');
+    result = true;
     return true;
   }).catch(error => {
-    console.log('Error inserting data: ', error);
+    console.log('Error inserting Ticket: ', error);
     return false;
   });
+  return result;
 }
 
 async function addActivity(info) {
@@ -572,20 +581,19 @@ async function updateAccount(accountInfo, userID) {
 }
 
 async function updateGoals(goals, userID) {
-  // update user goals
-  let g = JSON.parse(goals);
-
   // insert object into db
+  let result = false;
   let query = 'UPDATE fitness_user SET goals = $1 WHERE id = $2';
-  await db.none(query, [g, userID]).then(() => {
+  await db.none(query, [goals, userID]).then(() => {
     console.log('User goals updated successfully');
+    result = true;
     return true;
   }
   ).catch(error => {
     console.log('Error updating User goals: ', error);
     return false;
-  }
-  );
+  });
+  return result;
 }
 
 
@@ -605,19 +613,24 @@ app.get(['/', '/home'], async function (req, res) {
 
   res.status(200);
   res.setHeader("Content-Type", "text/html");
-  if (req.session.user && !req.session.admin) {
-    res.send(pug.renderFile("./views/pages/home.pug", { loggedin: true }));
-  } else if (!req.session.admin) {
+  if (!req.session.loggedin) {
     res.send(pug.renderFile("./views/pages/home.pug", { loggedin: false }));
-  } else if (req.session.user && req.session.admin) {
+  } else if (req.session.loggedin && req.session.admin) {
     let users = await getUsers();
     let tickets = await getTickets();
     let transactions = await getTransactions();
     let uEvents = await getUpcomingEvents();
     let pEvents = await getPastEvents();
     res.send(pug.renderFile("./views/pages/adminDashboard.pug", { sessionUser: req.session.userID, users: users, tickets: tickets, transactions: transactions, uEvents: uEvents, pEvents: pEvents }));
-  } else if (req.session.user) {
-    res.send(pug.renderFile("./views/pages/home.pug", { loggedin: true }));
+  } else if (req.session.loggedin) {
+    let user = await getUser(req.session.userID);
+    let addedExercises = await getExercisesAdded(req.session.userID);
+    let otherExercises = await getExercisesNotAdded(req.session.userID);
+    let uEvents = await getUpcomingEvents();
+    let pEvents = await getPastEvents();
+    let transactions = await getUserTransactions(req.session.userID);
+
+    res.send(pug.renderFile("./views/pages/userDashboard.pug", { user: user, addedExercises: addedExercises, otherExercises: otherExercises, uEvents: uEvents, pEvents: pEvents, transactions: transactions }));
   }
 });
 // LOGIN
@@ -752,10 +765,7 @@ app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/user
       res.send(pug.renderFile("./views/pages/event.pug", {event: event, loggedin: false}));
     }
   } else if (req.originalUrl.includes('/userexercises/')) {
-    let addedExercises = await getAddedExercises(id);
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(addedExercises));
+
   } else if (req.originalUrl.includes('/usertransactions/')) {
     let usertransactions = await getUserTransactions(id);
     res.status(200);
@@ -937,7 +947,24 @@ app.post('/create-event', express.urlencoded({ extended: false }), async (req, r
     console.log("Could not create event.\n");
   }
 });
+//CREATE TICKET
+app.post('/create-ticket', express.urlencoded({ extended: false }), async (req, res) => {
+  let ticket = req.body;
 
+  // create event
+  let result = await addTicket(ticket);
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Event added successfully");
+    console.log("Event added successfully.\n");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not create event");
+    console.log("Could not create event.\n");
+  }
+});
 
 // -------PUTS
 // DISABLE USER
@@ -1002,6 +1029,20 @@ app.put('/admin-password-reset/:id', express.urlencoded({ extended: false }), as
 // USER RSVP
 app.put('/rsvp-event', express.urlencoded({ extended: false }), async (req, res) => {
   let result = await addRSVP(req.session.userID, req.body.aid, req.body.status);
+
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("RSVP updated successfully");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not update RSVP status");
+  }
+});
+// USER RSVP
+app.put('/create-goal', express.urlencoded({ extended: false }), async (req, res) => {
+  let result = await updateGoals(req.body, req.session.userID);
 
   if (result) {
     res.status(200);
