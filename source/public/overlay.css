@@ -1,0 +1,55 @@
+/* Style the overlay element */
+#overlay {
+    position: fixed; /* Sit on top of the page content */
+    display: none; /* Hidden by default */
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+    z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+  }
+  
+  /* Style the form element */
+  #form {
+    position: absolute; /* Position the form in the center of the overlay */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px; /* Adjust the width as you like */
+    height: 300px; /* Adjust the height as you like */
+    background-color: white; /* White background for the form */
+    border: 1px solid #888; /* Add a border for the form */
+    padding: 20px; /* Add some padding for the form */
+    z-index: 3; /* Specify a stack order in case you're using a different order for other elements */
+  }
+  
+  /* Style the input elements */
+  #form input {
+    display: block; /* Display the inputs as block elements */
+    width: 80%; /* Use 80% of the form width */
+    margin: 10px auto; /* Add some margin around the inputs */
+    padding: 10px; /* Add some padding for the inputs */
+    border: 1px solid #ccc; /* Add a border for the inputs */
+  }
+  
+  /* Style the submit button */
+  #form input[type=submit] {
+    background-color: #5cb85c; /* Use a green background for the button */
+    color: white; /* Use a white text for the button */
+    cursor: pointer; /* Add a pointer on hover */
+  }
+  
+  /* Style the close button */
+  #close {
+    position: absolute; /* Position the close button in the top right corner of the form */
+    top: 10px;
+    right: 10px;
+    font-size: 28px; /* Use a large font size for the close button */
+    font-weight: bold; /* Use a bold font weight for the close button */
+    color: #aaa; /* Use a gray color for the close button */
+    cursor: pointer; /* Add a pointer on hover */
+  }
+  

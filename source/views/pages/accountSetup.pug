@@ -1,0 +1,65 @@
+doctype html
+html
+    head
+        style
+            include ../../public/stylesheet.css
+        include ../partials/loggedin
+        script 
+            include ../../public/js/shared/collectForm.js
+        title Account Setup
+    body
+        h1 Account Setup 
+        p You're almost done setting up your account! 
+        br
+        if user.goals === null && user.accountinfo !== null
+            p Add three fitness goals that you would like to achieve.
+            form#goals-form(name="goals-form")
+                label(for="goal1name") Goal 1:
+                input#goal1N(type="text", name="goal1name", placeholder="Goal 1 Name" required)
+                input#goal1(type="text", name="goal1", placeholder="Goal 1" required)
+                label(for="goal2name") Goal 2:
+                input#goal2N(type="text", name="goal2name", placeholder="Goal 2 Name" required)
+                input#goal2(type="text", name="goal2", placeholder="Goal 2" required)
+                label(for="goal3name") Goal 3:
+                input#goal3N(type="text", name="goal3name", placeholder="Goal 3 Name" required)
+                input#goal3(type="text", name="goal3", placeholder="Goal 3" required)
+                button#submit-button(type="button", onclick="addGoals()") Complete Account
+        
+        else if user.accountinfo === null && user.goals !== null
+            p Add your account information.
+            form#account-form(name="account-form")
+                label(for="height") Height:
+                input#height(type="text", name="height", placeholder="5\'4\"" required)
+                label(for="weight") Weight:
+                input#goal1(type="text", name="weight", placeholder="180" required)
+                label(for="dateOfBirth") Weight:
+                input#goal1(type="date", name="dateOfBirth", placeholder="2001-10-23" required)
+                button#submit-button(type="button", onclick="addAccount()") Complete Account
+        
+        
+        else if user.accountinfo === null && user.goals === null
+            p Add three fitness goals that you would like to achieve.
+            form#both-form(name="goals-form")
+                div#goals-form
+                    label(for="goal1name") Goal 1:
+                    input#goal1N(type="text", name="goal1name", placeholder="Goal 1 Name" required)
+                    input#goal1(type="text", name="goal1", placeholder="Goal 1" required)
+                    label(for="goal2name") Goal 2:
+                    input#goal2N(type="text", name="goal2name", placeholder="Goal 2 Name" required)
+                    input#goal2(type="text", name="goal2", placeholder="Goal 2" required)
+                    label(for="goal3name") Goal 3:
+                    input#goal3N(type="text", name="goal3name", placeholder="Goal 3 Name" required)
+                    input#goal3(type="text", name="goal3", placeholder="Goal 3" required)
+                br
+                div#account-form
+                    p Add your account information.
+                    label(for="height") Height:
+                    input#height(type="text", name="height", placeholder="5\'4\"" required)
+                    label(for="weight") Weight:
+                    input#goal1(type="text", name="weight", placeholder="180" required)
+                    label(for="dateOfBirth") Weight:
+                    input#goal1(type="date", name="dateOfBirth", placeholder="2001-10-23" required)
+                
+                button#submit-button(type="button", onclick="addBoth()") Complete Account
+    script
+        include ../../public/js/accountSetup.js

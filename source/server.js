@@ -403,6 +403,8 @@ async function payTransaction(info, userID) {
   // get transaction
   let transaction = await db.oneOrNone('SELECT * FROM user_transaction WHERE id = $1', [info.id]);
 
+  if (transaction.paid) {return -3;}
+
   let user = await getUser(userID);
   let dbError = false;
 
@@ -626,13 +628,18 @@ app.get(['/', '/home'], async function (req, res) {
     res.send(pug.renderFile("./views/pages/adminDashboard.pug", { sessionUser: req.session.userID, users: users, tickets: tickets, transactions: transactions, uEvents: uEvents, pEvents: pEvents }));
   } else if (req.session.loggedin) {
     let user = await getUser(req.session.userID);
-    let addedExercises = await getExercisesAdded(req.session.userID);
-    let otherExercises = await getExercisesNotAdded(req.session.userID);
-    let uEvents = await getUpcomingEvents();
-    let pEvents = await getPastEvents();
-    let transactions = await getUserTransactions(req.session.userID);
-
-    res.send(pug.renderFile("./views/pages/userDashboard.pug", { user: user, addedExercises: addedExercises, otherExercises: otherExercises, uEvents: uEvents, pEvents: pEvents, transactions: transactions }));
+    // check if user has setup account 
+    if (user.accountinfo === null || user.goals === null) {
+      res.send(pug.renderFile("./views/pages/accountSetup.pug", { user: user }));
+    } else { 
+      let addedExercises = await getExercisesAdded(req.session.userID);
+      let otherExercises = await getExercisesNotAdded(req.session.userID);
+      let uEvents = await getUpcomingEvents();
+      let pEvents = await getPastEvents();
+      let transactions = await getUserTransactions(req.session.userID);
+  
+      res.send(pug.renderFile("./views/pages/userDashboard.pug", { user: user, addedExercises: addedExercises, otherExercises: otherExercises, uEvents: uEvents, pEvents: pEvents, transactions: transactions }));
+    }
   }
 });
 // LOGIN
@@ -1150,6 +1157,10 @@ app.put('/pay', express.urlencoded({ extended: false }), async (req, res) => {
     res.status(500);
     res.setHeader("Content-Type", "text/plain");
     res.send("Payment is expired");
+  } else if (result === -3 ) {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Transaction is already paid");
   } else {
     res.status(500);
     res.setHeader("Content-Type", "text/plain");
