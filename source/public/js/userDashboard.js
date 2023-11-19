@@ -70,9 +70,11 @@ function sendGoals() {
         })
         .then(responseData => {
             console.log("server got back: " + responseData);
+            location.reload(true);
         })
         .catch(error => {
             console.log("server got back: " + error);
+            location.reload(true);
         });
 }
 
@@ -91,7 +93,7 @@ function goal(id) {
     
     console.log(goals);
 
-    // send server updated goals66666
+    // send server updated goals
     sendGoals();
 }
 
@@ -114,9 +116,11 @@ function completeExercise(id) {
         })
         .then(responseData => {
             console.log("server got back: " + responseData);
+            location.reload(true);
         })
         .catch(error => {
             console.log("server got back: " + error);
+            location.reload(true);
         });
 }
 
@@ -139,9 +143,11 @@ function removeExercise(id) {
         })
         .then(responseData => {
             console.log("server got back: " + responseData);
+            location.reload(true);
         })
         .catch(error => {
             console.log("server got back: " + error);
+            location.reload(true);
         });
 }
 
@@ -164,8 +170,10 @@ function addExercise(id) {
         })
         .then(responseData => {
             console.log("server got back: " + responseData);
+            location.reload(true);
         })
         .catch(error => {
             console.log("server got back: " + error);
+            location.reload(true);
         });
 }

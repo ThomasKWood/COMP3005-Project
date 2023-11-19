@@ -17,5 +17,27 @@ html
         else if !match
             p You are not the user who is tied to this transaction. You cannot pay for it.
         else if !admin && loggedin && match
-            p valid.
-
+            h2 Transaction Details
+            p Transaction ID: #{transaction.id}
+            p Type: #{transaction.type}
+            p Amount: $#{transaction.amount}
+            p Due: #{transaction.date}
+            p Points back: #{transaction.points}
+            if transaction.paid 
+                h3 This transaction has already been paid.
+            else 
+                h3 This transaction has not been paid.
+                if user.points >= transaction.amount
+                    h4 Points: #{user.points}
+                    p It looks like you have enough points to pay for this transaction. Would you like to pay for it with points?
+                    button.pay-button(type="button", onclick=`pay(${transaction.id}, true)`) Pay with Points
+                    h4 You will have #{(user.points - transaction.amount)+transaction.points} points left after this transaction.
+                 
+                if payment 
+                    p Pay for this transaction with your payment method: 
+                    button.pay-button(type="button", onclick=`pay(${transaction.id}, false)`) Pay with Payment Method
+                else
+                    p You do not have an added payment method. Please add one to your profile.
+                    a(href='/userDashboard') Go to Profile
+    script
+        include ../../public/js/pay.js

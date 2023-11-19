@@ -400,16 +400,14 @@ async function updateLastdone(info, userID) {
 }
 
 async function payTransaction(info, userID) {
+  // get transaction
+  let transaction = await db.oneOrNone('SELECT * FROM user_transaction WHERE id = $1', [info.id]);
+
   let user = await getUser(userID);
   let dbError = false;
 
-  // convert info into object
-  let transaction = JSON.parse(info);
-  // json format
-  // {id: 1, amount: 100, points: 100, paidbypoints: false}
-
   // determine if paid by points or money
-  if (transaction.paidbypoints) {
+  if (info.paidbypoints) {
     // pay with points
     if (user.points >= transaction.amount) {
       // user has enough points
@@ -1134,6 +1132,29 @@ app.put('/complete-exercise', express.urlencoded({ extended: false }), async (re
     res.status(500);
     res.setHeader("Content-Type", "text/plain");
     res.send("Could not update last done for exercise: " + req.body.eid);
+  }
+});
+// USER PAY TRANSACTION
+app.put('/pay', express.urlencoded({ extended: false }), async (req, res) => {
+  let result = await payTransaction(req.body, req.session.userID);
+
+  if (result === 1) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Transaction paid successfully");
+  } else if (result === -1) {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("User does not have enough points");
+  } else if (result === -2) {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Payment is expired");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not pay transaction");
+
   }
 });
 
