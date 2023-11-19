@@ -1,0 +1,21 @@
+doctype html
+html
+    head
+        style
+            include ../../public/stylesheet.css
+        if loggedin 
+            include ../partials/loggedin
+        else
+            include ../partials/loggedout
+        title Pay Transaction
+    body
+        h1 Pay Transaction
+        if admin
+            p You are an admin. You cannot pay for a transaction.
+        else if !loggedin 
+            p You are not logged in. You cannot pay for a transaction.
+        else if !match
+            p You are not the user who is tied to this transaction. You cannot pay for it.
+        else if !admin && loggedin && match
+            p valid.
+

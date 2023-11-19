@@ -139,16 +139,7 @@ async function getExercisesNotAdded(userID) {
 
 // Get exercises added by user
 async function getExercisesAdded(userID) {
-  if (typeof userID === 'number' && Number.isInteger(userID)) {
-    // id lookup
-    return await db.any('SELECT e.id, e.name, ea.lastdone FROM exercise e JOIN exerciseadded ea ON e.id = ea.eid WHERE ea.uid = (SELECT eid FROM exerciseadded WHERE uid = $1)', [userID]);
-  } else if (typeof value === 'string') {
-    // email lookup
-    return await db.any('SELECT e.id, e.name, ea.lastdone FROM exercise e JOIN exerciseadded ea ON e.id = ea.eid WHERE ea.uid = (SELECT id FROM fitness_user WHERE email = \'$1\')', [userID]);
-  } else {
-    console.log('got a bad parameter for getExercisesNotAdded()');
-    return null;
-  }
+  return await db.any('SELECT e.id, e.name, ea.lastdone FROM exercise e JOIN exerciseadded ea ON e.id = ea.eid WHERE ea.uid = $1', [userID]);
 }
 
 async function getEmailExists(email) {
@@ -201,22 +192,21 @@ async function addNewExercise(info) {
 }
 
 async function addExerciseToUser(info, userID) {
-  // convert info into object
-  let exercise = JSON.parse(info);
-
-  // json format
-  // {exercise: 2, user: 1}
+  // {eid: 2}
 
   // insert into db
   let query = 'INSERT INTO exerciseadded(eid, uid) VALUES($1, $2)';
-  await db.none(query, [exercise.exercise, userID]).then(() => {
-    console.log('Data inserted successfully');
+  let result = false;
+  await db.none(query, [info.eid, userID]).then(() => {
+    console.log('Exercise added successfully');
+    result = true;
     return true;
   })
   .catch(error => {
-    console.log('Error inserting data: ', error);
+    console.log('Error inserting exercise added: ', error);
     return false;
   });
+  return result;
 }
 
 async function addTransaction(info) {
@@ -393,21 +383,20 @@ async function addUser(info) {
 
 // updaters
 async function updateLastdone(info, userID) {
-  // convert info into object
-  let exercise = JSON.parse(info);
-
-  // json format
   // {exercise: 2, user: 1, lastDone: "2020-12-12 12:00:00"}
 
   let query = 'UPDATE exerciseadded SET lastdone = CAST($1 AS DATE) WHERE eid = $2 AND uid = $3';
-  await db.none(query, [exercise.lastDone, exercise.exercise, userID]).then(() => {
-    console.log('Data updated successfully');
+  let result = false;
+  await db.none(query, [new Date(), info.eid, userID]).then(() => {
+    console.log('Exercise: Last done updated successfully');
+    result = true;
     return true;
   })
   .catch(error => {
-    console.log('Error updating data: ', error);
+    console.log('Error updating exercise: last done: ', error);
     return false;
   });
+  return result;
 }
 
 async function payTransaction(info, userID) {
@@ -596,6 +585,21 @@ async function updateGoals(goals, userID) {
   return result;
 }
 
+async function userRemoveExercise(body, userID) {
+  // remove exercise from user
+  let result = false;
+  let query = 'DELETE FROM exerciseadded WHERE eid = $1 AND uid = $2';
+  await db.none(query, [body.eid, userID]).then(() => {
+    console.log('Exercise removed successfully');
+    result = true;
+    return true;
+  }).catch(error => {
+    console.log('Error removing Exercise: ', error);
+    return false;
+  });
+  return result;
+}
+
 
 
 
@@ -670,7 +674,6 @@ app.get('/logout', function (req, res, next) {
     })
   })
 });
-
 // ADMIN RESET PASSWORD
 app.get('/admin-password-reset/:id', function (req, res, next) {
   let pass = false;
@@ -701,7 +704,6 @@ app.get('/admin-password-reset/:id', function (req, res, next) {
     }
   }
 });
-
 // process data requests with parameter
 app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/usertransactions/:id', '/userevents/:id'], async function (req, res) {
   let id = req.params.id;
@@ -779,6 +781,58 @@ app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/user
   } else {
     console.log("got a bad request for a get parameterized route: " + req.originalUrl);
   }
+});
+// VIEW EXERCISE
+app.get('/exercise/:id', async function (req, res) {
+  let id = req.params.id;
+  if (Number.isInteger(parseInt(id))) {
+    id = parseInt(id);
+  }
+
+  let exercise = await getExercise(id);
+  res.status(200);
+  res.send(pug.renderFile("./views/pages/exercise.pug", {exercise: exercise}));
+});
+// USER VIEW TRANSACTION
+app.get('/pay/:id', async function (req, res) {
+  let id = req.params.id;
+  if (Number.isInteger(parseInt(id))) {
+    id = parseInt(id);
+  }
+
+  let transaction = await db.oneOrNone('SELECT * FROM user_transaction WHERE id = $1', [id]);
+  let payment = await getUserPayment(req.session.userID);
+  let user = await getUser(req.session.userID);
+
+  if (payment === null) {
+    payment = false;
+  } else { payment = true; }
+
+  if (transaction === null) {
+    res.status(404);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Transaction not found");
+    console.log("Transaction not found.\n");
+    return;
+  }
+
+  // check if user is logged in
+  if (req.session.userID === transaction.uid) {
+
+    res.status(200);
+    res.send(pug.renderFile("./views/pages/pay.pug", {transaction: transaction, payment: payment, user: user, loggedin: true, paid: transaction.paid, match: true}));
+
+  } else if (req.session.admin) {
+    res.status(200);
+    res.send(pug.renderFile("./views/pages/pay.pug", {admin: true}));
+  } else if (req.session.loggedin) {
+    res.status(200);
+    res.send(pug.renderFile("./views/pages/pay.pug", {match: false, loggedin: true}));
+  } else {
+    res.status(200);
+    res.send(pug.renderFile("./views/pages/pay.pug", {match: false, loggedin: false}));
+  }
+
 });
 
 // -------POSTS
@@ -868,7 +922,7 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
     console.log("    could not verify user login. Incorrect format.\n");
   }
 });
-// CREATE USER
+// ADMIN CREATE USER
 app.post('/create-user', express.urlencoded({ extended: false }), async (req, res) => {
   let user = req.body;
   user.admin = req.body.admin ? true : false;
@@ -898,7 +952,7 @@ app.post('/create-user', express.urlencoded({ extended: false }), async (req, re
     console.log("Could not create user. Email already exists.\n");
   }
 });
-// CREATE TRANSACTION
+// ADMIN CREATE TRANSACTION
 app.post('/create-transaction', express.urlencoded({ extended: false }), async (req, res) => {
   let transaction = req.body;
   
@@ -929,7 +983,7 @@ app.post('/create-transaction', express.urlencoded({ extended: false }), async (
     console.log("Could not create transaction. Email does not exist.\n");
   }
 });
-// CREATE EVENT
+// ADMIN CREATE EVENT
 app.post('/create-event', express.urlencoded({ extended: false }), async (req, res) => {
   let event = req.body;
 
@@ -947,7 +1001,7 @@ app.post('/create-event', express.urlencoded({ extended: false }), async (req, r
     console.log("Could not create event.\n");
   }
 });
-//CREATE TICKET
+// USER CREATE TICKET
 app.post('/create-ticket', express.urlencoded({ extended: false }), async (req, res) => {
   let ticket = req.body;
 
@@ -965,9 +1019,23 @@ app.post('/create-ticket', express.urlencoded({ extended: false }), async (req, 
     console.log("Could not create event.\n");
   }
 });
+// USER ADD EXERCISE
+app.post('/user-add-exercise', express.urlencoded({ extended: false }), async (req, res) => {
+  let result = await addExerciseToUser(req.body, req.session.userID);
+
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Exercise added to user successfully");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not add exercise");
+  }
+});
 
 // -------PUTS
-// DISABLE USER
+// ADMIN DISABLE USER
 app.put('/disable-user/:id', express.urlencoded({ extended: false }), async (req, res) => {
   let pass = false;
   let id = req.params.id;
@@ -1040,23 +1108,38 @@ app.put('/rsvp-event', express.urlencoded({ extended: false }), async (req, res)
     res.send("Could not update RSVP status");
   }
 });
-// USER RSVP
-app.put('/create-goal', express.urlencoded({ extended: false }), async (req, res) => {
+// USER UPDATE GOALS
+app.put('/update-goals', express.urlencoded({ extended: false }), async (req, res) => {
   let result = await updateGoals(req.body, req.session.userID);
 
   if (result) {
     res.status(200);
     res.setHeader("Content-Type", "text/plain");
-    res.send("RSVP updated successfully");
+    res.send("goals updated successfully");
   } else {
     res.status(500);
     res.setHeader("Content-Type", "text/plain");
-    res.send("Could not update RSVP status");
+    res.send("Could not update user goals");
+  }
+});
+// USER COMPLETE EXERCISE
+app.put('/complete-exercise', express.urlencoded({ extended: false }), async (req, res) => {
+  let result = await updateLastdone(req.body, req.session.userID);
+
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("User exercise last done updated successfully");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not update last done for exercise: " + req.body.eid);
   }
 });
 
+
 // -------DELETE
-// DELETE TICKET
+// ADMIN DELETE TICKET
 app.delete('/complete-ticket/:id', express.urlencoded({ extended: false }), async (req, res) => {
   let pass = false;
   let id = req.params.id;
@@ -1085,6 +1168,20 @@ app.delete('/complete-ticket/:id', express.urlencoded({ extended: false }), asyn
       res.send("Could not disable user");
       console.log("Could not disable user.\n");
     }
+  }
+});
+// USER REMOVE EXERCISE
+app.delete('/user-remove-exercise', express.urlencoded({ extended: false }), async (req, res) => {
+  let result = await userRemoveExercise(req.body, req.session.userID);
+
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Exercise removed successfully");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not remove exercise");
   }
 });
 

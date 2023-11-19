@@ -36,7 +36,7 @@ CREATE TABLE exercise (
 CREATE TABLE exerciseAdded (
     eid INT,
     uid INT,
-    lastDone DATE,
+    lastDone DATE DEFAULT NULL,
     PRIMARY KEY (eid, uid),
     FOREIGN KEY (eid) REFERENCES exercise(id),
     FOREIGN KEY (uid) REFERENCES fitness_user(id)

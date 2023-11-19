@@ -41,7 +41,10 @@ html
               each exercise in addedExercises
                 tr
                   td= exercise.name
-                  td= exercise.lastdone
+                  if exercise.lastdone == null
+                    td= "Never"
+                  else
+                    td= exercise.lastdone
                   td
                     button.table-button(type="button", onclick=`completeExercise(${exercise.id})`) Complete
                     button.table-button(type="button", onclick=`removeExercise(${exercise.id})`) Remove
@@ -63,7 +66,7 @@ html
                 tr
                   td= exercise.name
                   td
-                    button.table-button(type="button", onclick=`addExercise(${exercise.id})`) Add Exercise
+                    button.table-button(type="button", onclick=`addExercise(${exercise.id})`) Add to your exercises
                   td
                     a(href='/exercise/'+exercise.id) View Exercise
         else
@@ -178,7 +181,7 @@ html
                   td= transaction.amount
                   if !transaction.paid
                     td
-                      a(href='/pay/'+transaction.id) Pay
+                      a(href='/pay/'+transaction.transaction_id) Pay
                   else 
                     td Paid
 

@@ -1,0 +1,19 @@
+doctype html
+html
+    head
+        style
+            include ../../public/stylesheet.css
+        if loggedin 
+            include ../partials/loggedin
+        else
+            include ../partials/loggedout
+        title #{exercise.name}
+    body
+        h1 #{exercise.name}
+        img(src=exercise.link alt=exercise.name)
+        br
+        p #{exercise.info.steps[0]}
+        ul 
+            each step, index in exercise.info.steps
+                if index > 0
+                    li= step
