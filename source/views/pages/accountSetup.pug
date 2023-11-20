@@ -32,14 +32,14 @@ html
                 input#height(type="text", name="height", placeholder="5\'4\"" required)
                 label(for="weight") Weight:
                 input#goal1(type="text", name="weight", placeholder="180" required)
-                label(for="dateOfBirth") Weight:
+                label(for="dateOfBirth") Date of Birth:
                 input#goal1(type="date", name="dateOfBirth", placeholder="2001-10-23" required)
                 button#submit-button(type="button", onclick="addAccount()") Complete Account
         
         
         else if user.accountinfo === null && user.goals === null
             p Add three fitness goals that you would like to achieve.
-            form#both-form(name="goals-form")
+            form#both-form(name="both-form")
                 div#goals-form
                     label(for="goal1name") Goal 1:
                     input#goal1N(type="text", name="goal1name", placeholder="Goal 1 Name" required)
@@ -57,7 +57,7 @@ html
                     input#height(type="text", name="height", placeholder="5\'4\"" required)
                     label(for="weight") Weight:
                     input#goal1(type="text", name="weight", placeholder="180" required)
-                    label(for="dateOfBirth") Weight:
+                    label(for="dateOfBirth") Date of Birth:
                     input#goal1(type="date", name="dateOfBirth", placeholder="2001-10-23" required)
                 
                 button#submit-button(type="button", onclick="addBoth()") Complete Account

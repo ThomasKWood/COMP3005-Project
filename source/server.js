@@ -554,19 +554,20 @@ async function changePassword(id, password) {
 }
 
 async function updateAccount(accountInfo, userID) {
-  // update user account info
-  let ai = JSON.parse(accountInfo);
 
   // insert object into db
   let query = 'UPDATE fitness_user SET accountinfo = $1 WHERE id = $2';
-  await db.none(query, [ai, userID]).then(() => {
+  let result = false;
+  await db.none(query, [accountInfo, userID]).then(() => {
     console.log('User account info updated successfully');
+    result = true;
     return true;
   })
   .catch(error => {
     console.log('Error updating User account info: ', error);
     return false;
   });
+  return result;
 }
 
 async function updateGoals(goals, userID) {
@@ -1168,7 +1169,20 @@ app.put('/pay', express.urlencoded({ extended: false }), async (req, res) => {
 
   }
 });
+// USER UPDATE ACCOUNT
+app.put('/update-account', express.urlencoded({ extended: false }), async (req, res) => {
+ let result = await updateAccount(req.body, req.session.userID);
 
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Account updated successfully");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not update account");
+  }
+});
 
 // -------DELETE
 // ADMIN DELETE TICKET
