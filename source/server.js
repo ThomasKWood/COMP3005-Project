@@ -86,13 +86,7 @@ async function getUser(userID) {
 }
 // get user payment by id or email
 async function getUserPayment(userID) {
-  if (typeof userID === 'number' && Number.isInteger(userID)) {
-    // id lookup
-    return await db.oneOrNone('SELECT * FROM payment WHERE uid = $1', [userID]);
-  } else if (typeof userID === 'string') {
-    // email lookup
-    return await db.oneOrNone('SELECT * FROM payment WHERE email = $1', [userID]);
-  }
+  return await db.oneOrNone('SELECT * FROM payment WHERE uid = $1', [userID]);
 }
 
 async function getUpcomingEvents() {
@@ -303,8 +297,8 @@ async function addPayment(info, userID) {
   let curDate = new Date();
   let curYear = curDate.getFullYear();
   let curMonth = curDate.getMonth() + 1;
-  let expiryYear = parseInt(payment.expiryYear);
-  let expiryMonth = parseInt(payment.expiryMonth);
+  let expiryYear = parseInt(payment.expiryyear);
+  let expiryMonth = parseInt(payment.expirymonth);
   
 
   let acceptUpdate = false
@@ -312,7 +306,7 @@ async function addPayment(info, userID) {
     // check if payment is expired
     if (curYear > expiryYear) {
       acceptUpdate = true;
-    } else if (curYear <= expiryYear) {
+    } else if (curYear === expiryYear) {
       if (curMonth > expiryMonth) {
         acceptUpdate = true;
       }
@@ -321,7 +315,7 @@ async function addPayment(info, userID) {
     if (acceptUpdate) {
       // update payment
       let query = 'UPDATE payment SET type = $1, number = $2, expiryYear = $3, expiryMonth = $4, cvc = $5, name = $6 WHERE uid = $7';
-      await db.none(query, [payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name, userID]).then(() => {
+      await db.none(query, [payment.type, payment.number, payment.expiryyear, payment.expirymonth, payment.cvc, payment.name, userID]).then(() => {
         console.log('Payment updated successfully');
         return true;
       }).catch(error => {
@@ -338,7 +332,7 @@ async function addPayment(info, userID) {
     // check card is not expired first
     if (curYear > expiryYear) {
       acceptUpdate = true;
-    } else if (curYear <= expiryYear) {
+    } else if (curYear === expiryYear) {
       if (curMonth > expiryMonth) {
         acceptUpdate = true;
       }
@@ -347,7 +341,7 @@ async function addPayment(info, userID) {
     if (acceptUpdate) {
       // update payment
       let query = 'INSERT INTO payment(uid, type, number, expiryYear, expiryMonth, cvc, name) VALUES($1, $2, $3, $4, $5, $6, $7)';
-      await db.none(query, [userID, payment.type, payment.number, payment.expiryYear, payment.expiryMonth, payment.cvc, payment.name]).then(() => {
+      await db.none(query, [userID, payment.type, payment.number, payment.expiryyear, payment.expirymonth, payment.cvc, payment.name]).then(() => {
         console.log('Payment updated successfully');
         return true;
       }).catch(error => {
@@ -456,13 +450,13 @@ async function payTransaction(info, userID) {
     let curDate = new Date();
     let curYear = curDate.getFullYear();
     let curMonth = curDate.getMonth() + 1;
-    let expiryYear = parseInt(payment.expiryYear);
-    let expiryMonth = parseInt(payment.expiryMonth);
+    let expiryYear = parseInt(payment.expiryyear);
+    let expiryMonth = parseInt(payment.expirymonth);
 
     if (curYear > expiryYear) {
       // payment is expired
       return -2;
-    } else if (curYear <= expiryYear) {
+    } else if (curYear === expiryYear) {
       if (curMonth > expiryMonth) {
         // payment is expired
         return -2;
@@ -711,81 +705,60 @@ app.get('/admin-password-reset/:id', function (req, res, next) {
   }
 });
 // process data requests with parameter
-app.get(['/user/:id', '/payment/:id', '/event/:id', '/userexercises/:id', '/usertransactions/:id', '/userevents/:id'], async function (req, res) {
+app.get('/event/:id', async function (req, res) {
   let id = req.params.id;
   if (Number.isInteger(parseInt(id))) {
     id = parseInt(id);
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Server only accepts integers");
+    console.log("incorrect parameter format. for /event/:id\n");
   }
 
-  // Determine the route based on the URL
-  if (req.originalUrl.includes('/user/')) {
-    let user = await getUser(id);
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(user));
-  } else if (req.originalUrl.includes('/payment/')) {
-    let payMethod = await getUserPayment(id);
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(payMethod));
-  } else if (req.originalUrl.includes('/event/')) {
-    // get event / check if exists
-    let event = await db.oneOrNone('SELECT * FROM fitness_event WHERE id = $1', [id]);
-    if (event === null) {
-      res.status(404);
-      res.setHeader("Content-Type", "text/plain");
-      res.send("Event not found");
-      console.log("Event not found.\n");
-      return;
-    }
 
-    // handle admin request
-    if (req.session.admin) {
-      let rsvp = await getEventRSVP(id);
-      event.rsvp = rsvp;
-      res.status(200);
-      res.send(pug.renderFile("./views/pages/event.pug", {event: event, admin: true}));
+  // get event / check if exists
+  let event = await db.oneOrNone('SELECT * FROM fitness_event WHERE id = $1', [id]);
+  if (event === null) {
+    res.status(404);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Event not found");
+    console.log("Event not found.\n");
+    return;
+  }
+
+  // handle admin request
+  if (req.session.admin) {
+    let rsvp = await getEventRSVP(id);
+    event.rsvp = rsvp;
+    res.status(200);
+    res.send(pug.renderFile("./views/pages/event.pug", { event: event, admin: true }));
     // handle user request
-    } else if (req.session.user) {
-      // determine if user is RSVP'd
-      let rsvp = await getEventRSVP(id);
-      let rsvpBool = false;
-      for (let i = 0; i < rsvp.length; i++) {
-        if (rsvp[i].email === req.session.user) {
-          rsvpBool = true;
-        }
+  } else if (req.session.user) {
+    // determine if user is RSVP'd
+    let rsvp = await getEventRSVP(id);
+    let rsvpBool = false;
+    for (let i = 0; i < rsvp.length; i++) {
+      if (rsvp[i].email === req.session.user) {
+        rsvpBool = true;
       }
-
-      // check if date has passed.
-      let curDate = new Date();
-      let eventDate = new Date(event.when);
-      if (curDate > eventDate) {
-        // event has passed
-        res.status(200);
-        res.send(pug.renderFile("./views/pages/event.pug", {event: event, loggedin: true, rsvp: rsvpBool, eventPassed: true}));
-      } else {
-        // event has not passed
-        res.status(200);
-        res.send(pug.renderFile("./views/pages/event.pug", {event: event, loggedin: true, rsvp: rsvpBool}));
-      }
-    } else {
-      res.status(200);
-      res.send(pug.renderFile("./views/pages/event.pug", {event: event, loggedin: false}));
     }
-  } else if (req.originalUrl.includes('/userexercises/')) {
 
-  } else if (req.originalUrl.includes('/usertransactions/')) {
-    let usertransactions = await getUserTransactions(id);
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(usertransactions));
-  } else if (req.originalUrl.includes('/userevents/')) {
-    let userevents = await getRSVPevents(id);
-    res.status(200);
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(userevents));
+    // check if date has passed.
+    let curDate = new Date();
+    let eventDate = new Date(event.when);
+    if (curDate > eventDate) {
+      // event has passed
+      res.status(200);
+      res.send(pug.renderFile("./views/pages/event.pug", { event: event, loggedin: true, rsvp: rsvpBool, eventPassed: true }));
+    } else {
+      // event has not passed
+      res.status(200);
+      res.send(pug.renderFile("./views/pages/event.pug", { event: event, loggedin: true, rsvp: rsvpBool }));
+    }
   } else {
-    console.log("got a bad request for a get parameterized route: " + req.originalUrl);
+    res.status(200);
+    res.send(pug.renderFile("./views/pages/event.pug", { event: event, loggedin: false }));
   }
 });
 // VIEW EXERCISE
@@ -839,6 +812,63 @@ app.get('/pay/:id', async function (req, res) {
     res.send(pug.renderFile("./views/pages/pay.pug", {match: false, loggedin: false}));
   }
 
+});
+// USER PROFILE
+app.get('/profile', async function (req, res) {
+  // if admin send error
+  if (req.session.admin) {
+    res.status(403).json({ message: "Admins do not have profiles."});
+    return;
+  } else if (req.session.loggedin) {
+    let user = await getUser(req.session.userID);
+    let payment = await getUserPayment(req.session.userID);
+    // check if user payment is expired
+    let validPayment = true;
+    if (payment !== null) {
+      let curDate = new Date();
+      let curYear = curDate.getFullYear();
+      let curMonth = curDate.getMonth() + 1;
+      let expiryYear = parseInt(payment.expiryyear);
+      let expiryMonth = parseInt(payment.expirymonth);
+      if (curYear > expiryYear) {
+        // payment is expired
+        validPayment = false;
+      } else if (curYear === expiryYear) {
+        if (curMonth > expiryMonth) {
+          // payment is expired
+          validPayment = false;
+        }
+      }
+    } else {
+      validPayment = false;
+    }
+
+    // check if user has setup account 
+    res.status(200);
+    if (user.accountinfo === null) {
+      res.send(pug.renderFile("./views/pages/accountSetup.pug", { user: user }));
+    } else { 
+      // hide card details
+      if (payment !== null) {
+        // format card number
+        let cardNum = payment.cardnum;
+        let cardNumSplit = cardNum.split("");
+        let cardNumLast4 = cardNumSplit.slice(cardNumSplit.length - 4, cardNumSplit.length);
+        payment.cardnum = cardNumLast4.join("");
+
+        // format cvc
+        payment.cvc = "***";
+
+        // format expiry date
+        let expiryYear = payment.expiryyear.toString().slice(-2);
+        payment.expiry = payment.expirymonth + "/" + expiryYear;
+      }
+      res.send(pug.renderFile("./views/pages/profile.pug", { user: user, payment: payment, validPayment: validPayment }));
+    }
+  } else {
+    res.status(401);
+    res.redirect('/login');
+  }
 });
 
 // -------POSTS
@@ -931,7 +961,7 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
 // ADMIN CREATE USER
 app.post('/create-user', express.urlencoded({ extended: false }), async (req, res) => {
   let user = req.body;
-  user.admin = req.body.admin ? true : false;
+  user.admin = req.body.admin === 'true';
 
   // check if email exists
   let emailExists = await getEmailExists(user.email);

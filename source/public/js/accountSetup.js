@@ -72,7 +72,7 @@ function addAccount() {
         });
 }
 
-function addBoth() {
+async function addBoth() {
     let form = document.forms.namedItem("both-form");
     let formData = new getFormData(form);
 
@@ -93,7 +93,7 @@ function addBoth() {
     goals.goals[2].value = formData.goal3;
 
     let gResult = false;
-    fetch('/update-goals', {
+    await fetch('/update-goals', {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"
@@ -121,7 +121,7 @@ function addBoth() {
     accountinfo.dateoOfBirth = formData.dateOfBirth;
     
     let aResult = false;
-    fetch('/update-account', {
+    await fetch('/update-account', {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"

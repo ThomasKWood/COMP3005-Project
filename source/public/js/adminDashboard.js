@@ -61,6 +61,7 @@ form0.addEventListener('submit', function (event) {
 
     var data = getFormData(form0);
     console.log(data);
+    
     fetch('/create-user', {
         method: "POST",
         headers: {
@@ -89,6 +90,7 @@ form1.addEventListener('submit', function (event) {
 
     var data = getFormData(form1);
     console.log(data);
+
     fetch('/create-transaction', {
         method: "POST",
         headers: {

@@ -1,0 +1,68 @@
+doctype html
+html
+    head
+        style
+            include ../../public/stylesheet.css
+        include ../partials/loggedin
+        title Your Profile
+    body
+        h1 Your Profile 
+        h2 Your Account Information
+        p Name: #{user.fname} #{user.lname}
+        p Email: #{user.email}
+
+        br
+
+        h2 Medical Information
+        form(name="account-form")
+            label(for="height") Height:
+            input#input(type="text", name="height", value=user.accountinfo.height required)
+            label(for="weight") Weight:
+            input#input(type="text", name="weight", value=user.accountinfo.weight required)
+            label(for="dateOfBirth") Date of Birth:
+            input#input(type="date", name="dateOfBirth", value=user.accountinfo.dateOfBirth required)
+            button#submit-button(type="button", onclick="updateAccount()") Update Account
+
+        br
+
+        if payment == null
+            h2 You Do not have a Payment Method. You can add one below:
+            form(name="payment-form")
+                label(for="name") Name on Card:
+                input#input(type="text", name="name", placeholder="John Doe" required)
+                label(for="type") Card Type:
+                input#input(type="text", name="type", placeholder="Visa" required)
+                label(for="cardnum") Card Number:
+                input#input(type="text", name="cardnum", minlength="16" maxlength="19" placeholder="4242-4242-4242-4242" required)
+                label(for="expiryDate") Expiry Date:
+                input#input(type="text" name="expiryDate" placeholder="MM/YY" maxlength="5" oninput="formatExpiryDate(event)" required)
+                label(for="cvv") CVC:
+                input#cvv(type="text" name="cvc" placeholder="123" required)
+                button#submit-button(type="button", onclick="updatePayment()") Add Payment Method
+        else if !validPayment
+            h2 Your Payment Method:
+            p#error Your payment method is expired. Please update it.
+            form(name="payment-form")
+                label(for="name") Name on Card:
+                input#input(type="text", name="name", value=payment.name required)
+                label(for="type") Card Type:
+                input#input(type="text", name="type", value=payment.type required)
+                label(for="cardnum") Card Number:
+                input#input(type="text", name="cardnum", minlength="16" maxlength="19" value="****-****-****-"+payment.cardnum required)
+                label(for="expiryDate") Expiry Date:
+                input#input(type="text" name="expiryDate" value=payment.expiry maxlength="5" oninput="formatExpiryDate(event)" required)
+                label(for="cvv") CVC:
+                input#input(type="text" name="cvc" value=payment.cvc required)
+                button#submit-button(type="button", onclick="updatePayment()") Update Payment Method
+        else
+            h2 Your Payment Method:
+            p Your payment method is valid.
+            p Name on Card: #{payment.name}
+            p Card Type: #{payment.type}
+            p Card Number: ****-****-****-#{payment.cardnum}
+            p Expiry Date: #{payment.expiry}
+
+            
+
+    script
+        include ../../public/js/pay.js
