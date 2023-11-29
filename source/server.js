@@ -284,12 +284,10 @@ async function addRSVP(uid, aid, status) {
   return result;
 }
 
-async function addPayment(info, userID) {
-  // convert info into object
-  let payment = JSON.parse(info);
+async function addPayment(payment, userID) {
+  let returnVal = false;
 
-  // json format
-  // {uid: 1, type: "Visa", number: "123456789", expiryYear: 2023, expiryMonth: 12, cvc: 123, name: "John Smith"}
+  // {type: "Visa", number: "123456789", expiryYear: 23, expiryMonth: 12, cvc: 123, name: "John Smith"}
 
   // check if payment already exists
   let result = await db.oneOrNone('SELECT * FROM payment WHERE uid = $1', [userID]);
@@ -297,26 +295,28 @@ async function addPayment(info, userID) {
   let curDate = new Date();
   let curYear = curDate.getFullYear();
   let curMonth = curDate.getMonth() + 1;
-  let expiryYear = parseInt(payment.expiryyear);
-  let expiryMonth = parseInt(payment.expirymonth);
+
+  let expiryYear = payment.expiryyear;
+  let expiryMonth = payment.expirymonth;
   
 
   let acceptUpdate = false
   if (result !== null) {
     // check if payment is expired
-    if (curYear > expiryYear) {
+    if (curYear < expiryYear) {
       acceptUpdate = true;
     } else if (curYear === expiryYear) {
-      if (curMonth > expiryMonth) {
+      if (curMonth < expiryMonth) {
         acceptUpdate = true;
       }
     }
 
     if (acceptUpdate) {
       // update payment
-      let query = 'UPDATE payment SET type = $1, number = $2, expiryYear = $3, expiryMonth = $4, cvc = $5, name = $6 WHERE uid = $7';
-      await db.none(query, [payment.type, payment.number, payment.expiryyear, payment.expirymonth, payment.cvc, payment.name, userID]).then(() => {
+      let query = 'UPDATE payment SET type = $1, cardnum = $2, expiryyear = $3, expirymonth = $4, cvc = $5, name = $6 WHERE uid = $7';
+      await db.none(query, [payment.type, payment.cardnum, payment.expiryyear, payment.expirymonth, payment.cvc, payment.name, userID]).then(() => {
         console.log('Payment updated successfully');
+        returnVal = true;
         return true;
       }).catch(error => {
         console.log('Error updating payment data: ', error);
@@ -325,7 +325,6 @@ async function addPayment(info, userID) {
     } else {
       // payment is not expired
       console.log('Payment is not expired. Cannot update payment.');
-      return false;
     }
   } else {
     // no payment exists
@@ -340,9 +339,10 @@ async function addPayment(info, userID) {
 
     if (acceptUpdate) {
       // update payment
-      let query = 'INSERT INTO payment(uid, type, number, expiryYear, expiryMonth, cvc, name) VALUES($1, $2, $3, $4, $5, $6, $7)';
-      await db.none(query, [userID, payment.type, payment.number, payment.expiryyear, payment.expirymonth, payment.cvc, payment.name]).then(() => {
-        console.log('Payment updated successfully');
+      let query = 'INSERT INTO payment(uid, type, cardnum, expiryyear, expirymonth, cvc, name) VALUES($1, $2, $3, $4, $5, $6, $7)';
+      await db.none(query, [userID, payment.type, payment.cardnum, payment.expiryyear, payment.expirymonth, payment.cvc, payment.name]).then(() => {
+        console.log('Payment inserted successfully');
+        returnVal = true;
         return true;
       }).catch(error => {
         console.log('Error updating payment data: ', error);
@@ -354,6 +354,7 @@ async function addPayment(info, userID) {
       return false;
     }
   }
+  return returnVal;
 }
 
 async function addUser(info) {
@@ -1213,6 +1214,20 @@ app.put('/update-account', express.urlencoded({ extended: false }), async (req, 
     res.send("Could not update account");
   }
 });
+// USER UPDATE PAYMENT
+app.put('/add-payment', express.urlencoded({ extended: false }), async (req, res) => {
+  let result = await addPayment(req.body, req.session.userID);
+ 
+   if (result) {
+     res.status(200);
+     res.setHeader("Content-Type", "text/plain");
+     res.send("Account updated successfully");
+   } else {
+     res.status(500);
+     res.setHeader("Content-Type", "text/plain");
+     res.send("Could not update account");
+   }
+ });
 
 // -------DELETE
 // ADMIN DELETE TICKET

@@ -31,7 +31,7 @@ function addGoals() {
         })
         .then(responseData => {
             console.log("server got back: " + responseData);
-            window.location = "/";
+            location.reload(true);
         })
         .catch(error => {
             console.log("server got back: " + error);
@@ -64,7 +64,7 @@ function addAccount() {
         })
         .then(responseData => {
             console.log("server got back: " + responseData);
-            window.location = "/";
+            location.reload(true);
         })
         .catch(error => {
             console.log("server got back: " + error);

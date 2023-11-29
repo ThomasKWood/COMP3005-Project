@@ -4,6 +4,8 @@ html
         style
             include ../../public/stylesheet.css
         include ../partials/loggedin
+        script 
+            include ../../public/js/shared/collectForm.js
         title Your Profile
     body
         h1 Your Profile 
@@ -16,12 +18,12 @@ html
         h2 Medical Information
         form(name="account-form")
             label(for="height") Height:
-            input#input(type="text", name="height", value=user.accountinfo.height required)
+            input#height(type="text" name="height" value=user.accountinfo.height required)
             label(for="weight") Weight:
-            input#input(type="text", name="weight", value=user.accountinfo.weight required)
+            input#weight(type="text" name="weight" value=user.accountinfo.weight required)
             label(for="dateOfBirth") Date of Birth:
-            input#input(type="date", name="dateOfBirth", value=user.accountinfo.dateOfBirth required)
-            button#submit-button(type="button", onclick="updateAccount()") Update Account
+            input#dateOfBirth(type="date" name="dateOfBirth" value=user.accountinfo.dateOfBirth required)
+            button#submit-button(type="button" onclick="updateAccount()") Save
 
         br
 
@@ -29,40 +31,52 @@ html
             h2 You Do not have a Payment Method. You can add one below:
             form(name="payment-form")
                 label(for="name") Name on Card:
-                input#input(type="text", name="name", placeholder="John Doe" required)
+                input#name(type="text" name="name" placeholder="John Doe" required)
                 label(for="type") Card Type:
-                input#input(type="text", name="type", placeholder="Visa" required)
+                select#type(name='type')
+                    option(value='Credit Card') Credit Card
+                    option(value='Debit Card') Debit Card
                 label(for="cardnum") Card Number:
-                input#input(type="text", name="cardnum", minlength="16" maxlength="19" placeholder="4242-4242-4242-4242" required)
+                input#cardnum(type="text" name="cardnum" pattern="[0-9]*" inputmode="numeric" placeholder="0000 0000 0000 0000" required)
                 label(for="expiryDate") Expiry Date:
-                input#input(type="text" name="expiryDate" placeholder="MM/YY" maxlength="5" oninput="formatExpiryDate(event)" required)
-                label(for="cvv") CVC:
-                input#cvv(type="text" name="cvc" placeholder="123" required)
-                button#submit-button(type="button", onclick="updatePayment()") Add Payment Method
+                input#expiryDate(type="text" name="expiryDate"  placeholder="MM/YY" pattern="[0-9]*" inputmode="numeric" required)
+                label(for="cvc") CVC:
+                input#cvc(type="text" name="cvc" placeholder="000" pattern="[0-9]*" inputmode="numeric" required)
+                button#submit-button(type="button" onclick="updatePayment()") Add Payment Method
         else if !validPayment
             h2 Your Payment Method:
             p#error Your payment method is expired. Please update it.
             form(name="payment-form")
                 label(for="name") Name on Card:
-                input#input(type="text", name="name", value=payment.name required)
+                input#name(type="text" name="name" placeholder=payment.name required)
                 label(for="type") Card Type:
-                input#input(type="text", name="type", value=payment.type required)
+                select#type(name='type')
+                    if payment.type === 'Credit Card'
+                        option(value='Credit Card') Credit Card
+                        option(value='Debit Card') Debit Card
+                    else if payment.type === 'Debit Card'
+                        option(value='Debit Card') Debit Card
+                        option(value='Credit Card') Credit Card
+                    else
+                        option(value='Credit Card') Credit Card
+                        option(value='Debit Card') Debit Card
                 label(for="cardnum") Card Number:
-                input#input(type="text", name="cardnum", minlength="16" maxlength="19" value="****-****-****-"+payment.cardnum required)
+                input#cardnum(type="text" name="cardnum" pattern="[0-9]*" inputmode="numeric" placeholder="**** **** **** "+payment.cardnum required)
                 label(for="expiryDate") Expiry Date:
-                input#input(type="text" name="expiryDate" value=payment.expiry maxlength="5" oninput="formatExpiryDate(event)" required)
-                label(for="cvv") CVC:
-                input#input(type="text" name="cvc" value=payment.cvc required)
-                button#submit-button(type="button", onclick="updatePayment()") Update Payment Method
+                input#expiryDate(type="text" name="expiryDate" placeholder=payment.expiry pattern="[0-9]*" inputmode="numeric" required)
+                label(for="cvc") CVC:
+                input#cvc(type="text" name="cvc" placeholder=payment.cvc pattern="[0-9]*" inputmode="numeric" required)
+                button#submit-button(type="button" onclick="updatePayment()") Save
+
         else
             h2 Your Payment Method:
             p Your payment method is valid.
+            p Details of Card ending in #{payment.cardnum}:
             p Name on Card: #{payment.name}
             p Card Type: #{payment.type}
-            p Card Number: ****-****-****-#{payment.cardnum}
             p Expiry Date: #{payment.expiry}
 
             
 
     script
-        include ../../public/js/pay.js
+        include ../../public/js/profile.js
