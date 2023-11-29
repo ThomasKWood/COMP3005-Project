@@ -1,0 +1,25 @@
+doctype html
+html
+    head
+        style
+            include ../../public/stylesheet.css
+        script
+            include ../../public/js/shared/collectForm.js
+        title Register
+    body
+        h1 Register
+        form(name="register-form")
+            label(for="fname") First Name:
+            input#fname(type="text" name="fname" required)
+            label(for="lname") Last Name:
+            input#lname(type="text" name="lname" required)
+            label(for="email") Email:
+            input#email(type="email" name="email" required)
+            label(for="password") Password:
+            input#password(type="password" name="password" required)
+            label(for="confirmPassword") Confirm Password:
+            input#confirmPassword(type="password" name="confirmPassword" required)
+            p#password-error(style="color: red; display: none;")
+            button#submit-button(type="button" onclick="register()") Register
+    script
+        include ../../public/js/register.js

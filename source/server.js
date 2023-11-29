@@ -41,13 +41,6 @@ app.use(session({
 }))
 
 // Functions
-function isAuthenticated (req, res, next) {
-  if (req.session.user) {
-    next();
-  } else {
-    res.redirect('/login');
-  }
-}
 // SQL Getters
 async function getUsers() {
   return await db.any('SELECT id, email, fname, lname, admin, joinDate, points, disabled FROM fitness_user');
@@ -234,24 +227,6 @@ async function addTicket(info) {
     return false;
   });
   return result;
-}
-
-async function addActivity(info) {
-  // convert info into object
-  let activity = JSON.parse(info);
-
-  // json format
-  // {name: "Yoga Class", info: "this activity is cool", when: "2020-12-24 12:00:00"}
-
-  // insert into db
-  let query = 'INSERT INTO activity(name, info, \"when\") VALUES($1, $2, CAST($3 AS DATE))';
-  await db.none(query, [activity.name, activity.info, activity.when]).then(() => {
-    console.log('Data inserted successfully');
-    return true;
-  }).catch(error => {
-    console.log('Error inserting data: ', error);
-    return false;
-  });
 }
 
 async function addRSVP(uid, aid, status) {
@@ -871,6 +846,22 @@ app.get('/profile', async function (req, res) {
     res.redirect('/login');
   }
 });
+// REGISTER
+app.get('/register', (req, res) => {
+  // for html
+  let rawRequest = req.headers.accept;
+  let requestSplit = rawRequest.split(",");
+  let request = requestSplit[0];
+  console.log("get /register ("+request+")");
+
+  res.status(200);
+  res.setHeader("Content-Type", "text/html");
+  if (req.session.user) {
+      res.send(pug.renderFile("./views/pages/loginError.pug"));
+  } else {
+      res.send(pug.renderFile("./views/pages/register.pug", {loggedin: false}));
+  }
+});
 
 // -------POSTS
 // LOGIN RECIEVE
@@ -1064,6 +1055,34 @@ app.post('/user-add-exercise', express.urlencoded({ extended: false }), async (r
     res.status(200);
     res.setHeader("Content-Type", "text/plain");
     res.send("Exercise added to user successfully");
+  } else {
+    res.status(500);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Could not add exercise");
+  }
+});
+// USER REGISTER
+app.post('/register', express.urlencoded({ extended: false }), async (req, res) => {
+  let user = req.body;
+  user.admin = false;
+
+  // check if email exists
+  let emailExists = await getEmailExists(user.email);
+  if (emailExists) {
+    res.status(409);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Email already exists");
+    console.log("Could not create user. Email already exists.\n");
+    return;
+  }
+
+  let result = await addUser(user);
+
+  if (result) {
+    res.status(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.send("Exercise added to user successfully");
+    
   } else {
     res.status(500);
     res.setHeader("Content-Type", "text/plain");
