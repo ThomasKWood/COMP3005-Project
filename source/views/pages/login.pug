@@ -2,20 +2,25 @@ html
     head
         style
             include ../../public/stylesheet.css
-        script
-            include ../../public/js/login.js
+        script 
+            include ../../public/js/shared/collectForm.js
         title Login
 body
     h1 User Login:
     br
     br
     div#main
-        p Email:
+        form(name="login-form")
+            label(for="username-input") Username:
             br
-            input(id="username-input", type="username", name="name", placeholder="user@email.com")
-        p Password:
+            input(id="username-input" type="email" name="username" placeholder="user@email.com")
             br
-            input(id="password-input", type="password", name="pass", placeholder="password")
-        br
-        div(class="login", onclick="login()") Login
+            label(for="password-input") Password:
+            br
+            input(id="password-input" type="password" name="password" placeholder="password")
+            p#password-error(style="color: red; display: none;")
+            br
+            button(class="login" type="button" onclick="login()") Login
     include ../partials/loggedout
+script
+    include ../../public/js/login.js

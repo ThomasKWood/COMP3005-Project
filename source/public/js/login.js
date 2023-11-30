@@ -11,56 +11,44 @@
  * @return {void} nothing
 **/
 function login() {
-    // setup
-    let divParent = document.getElementById("main").children;
-    // get username
-    let section = divParent[0].children;
-    let username = section[1].value;
-    // check if username is blank
-    if (username === "") {
-        alert("Email cannot be blank!");
-        return;
-    }
+    const error = document.getElementById('password-error');
+    const form = document.forms.namedItem('login-form');
 
-    // get password
-    section = divParent[1].children;
-    let password = section[1].value;
-    // check if password is blank
-    if (password === "") {
-        alert("Password cannot be blank!");
-        return;
-    }
-    // create body data
-    const reqBody = {
-        username,
-        password
-    }
+    let data = getFormData(form);
 
-    // send data
-    let req = new XMLHttpRequest();
-    req.onreadystatechange = function () {
-        console.log(req)
-        if (this.readyState==4) {
-            // server accepted login
-            if (req.status === 200) {
-                //alert("Succesfully Logged-In.\nRedirecting to home page.");
-                window.location = "/";
-            }
-            // server said password was incorrect
-            if(req.status === 401) {
-                alert("Password is incorrect.");
-            }
-            // server said username was not registered
-            if(req.status === 404) {
-                alert("Email not registered.");
-            }
-
-            if (req.status === 402) {
-                alert("Account has been disabled. Please contact an admininstrator.");
-            }
+    fetch('/login', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => {
+        if (response.status === 401) {
+            error.innerHTML = 'Password is incorrect.';
+            error.style.display = 'block';
+            throw new Error('password is incorrect');
+        } else if (response.status === 403) {
+            error.innerHTML = 'No account with that email exists. Please register.';
+            error.style.display = 'block';
+            throw new Error('account does not exist');
+        }  else if (response.status === 406) {
+            error.innerHTML = 'Your Account has been disabled.';
+            error.style.display = 'block';
+            throw new Error('account disabled');
+        } else if (response.status === 200) {
+            error.innerHTML = '';
+            error.style.display = 'hidden';
+            window.location.href = '/';
+        } else if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
-    };
-    req.open("POST", "/login", true);
-    req.setRequestHeader("Content-Type", "application/json");
-    req.send(JSON.stringify(reqBody));
+        return response.text();
+    })
+    .then(responseData => {
+        console.log("server got back: " + responseData);
+    })
+    .catch(error => {
+        console.log("server got back: " + error);
+    });
 }

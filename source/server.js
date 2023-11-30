@@ -935,7 +935,7 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
 
         if (!user) {
           response = true;
-          res.status(401).json({ message: 'User not found' });
+          res.status(403).json({ message: 'User not found' });
           return;
         }
 
@@ -947,7 +947,7 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
 
         if (user.disabled) {
           response = true;
-          res.status(402).json({ message: 'User is disabled' });
+          res.status(406).json({ message: 'User is disabled' });
           return;
         }
 
