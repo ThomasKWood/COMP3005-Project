@@ -6,9 +6,10 @@ DROP TABLE IF EXISTS rsvpActivities;
 DROP TABLE IF EXISTS fitness_event;
 DROP TABLE IF EXISTS payment;
 DROP TABLE IF EXISTS user_transaction;
+DROP TABLE IF EXISTS user_account_info;
+DROP TABLE IF EXISTS user_goals;
 DROP TABLE IF EXISTS fitness_user;
 DROP TABLE IF EXISTS user_sessions;
-
 
 -- CREATE TABLES
 -- Create User table
@@ -20,10 +21,22 @@ CREATE TABLE fitness_user (
     lName VARCHAR(255) NOT NULL,
     admin BOOLEAN DEFAULT FALSE,
     joinDate DATE DEFAULT CURRENT_DATE,
-    accountInfo JSON,
-    goals JSON,
     points INT DEFAULT 0,
     disabled BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE user_account_info (
+    uid INT PRIMARY KEY,
+    height INT,
+    weight INT,
+    dateOfBirth DATE,
+    FOREIGN KEY (uid) REFERENCES fitness_user(id)
+);
+
+CREATE TABLE user_goals (
+    uid INT PRIMARY KEY,
+    goals JSON,
+    FOREIGN KEY (uid) REFERENCES fitness_user(id)
 );
 
 CREATE TABLE exercise (
@@ -98,16 +111,28 @@ INSERT INTO fitness_user (id, email, password, fName, lName, admin)
 VALUES (0, 'su', 'password', 'Super', 'User', true);
 
 -- Regular Users
-INSERT INTO fitness_user (email, password, fName, lName, admin, accountInfo, goals, points)
+INSERT INTO fitness_user (email, password, fName, lName, admin, points)
 VALUES
-    ('user1@example.com', 'password1hash', 'John', 'Doe', false, '{"height": 175,"weight": 70,"dateOfBirth": "1990-01-15"}', '{"goals": [{"id": 1, "name": "Goal 1","value": "Do 10 Pushups","completed": true},{"id": 2, "name": "Goal 2","value": "Do 20 Situps","completed": false},{"id": 3, "name": "Goal 3","value": "Do 30 Jumping Jacks","completed": true}]}', 100),
-    ('user2@example.com', 'password2hash', 'Jane', 'Smith', false, '{"height": 180, "weight": 75, "dateOfBirth": "1995-05-20"}', '{"goals": [{"id": 1, "name": "New Year Resolution", "value": "Go to the gym once a week for a month.", "completed": false}, {"id": 2, "name": "Fitness Milestone", "value": "Bench 140 pounds.", "completed": true}, {"id": 3, "name": "Personal Achievement", "value": "Reach 200 pounds.", "completed": false}]}', 50);
+    ('user1@example.com', 'password1hash', 'John', 'Doe', false, 100),
+    ('user2@example.com', 'password2hash', 'Jane', 'Smith', false, 50);
 INSERT INTO fitness_user (email, password, fName, lName)
     VALUES ('user3@example.com', 'password3hash', 'Bob', 'Johnson'); -- Blank User
 
 INSERT INTO fitness_user (email, password, fName, lName, disabled)
     VALUES ('user4@example.com', 'password4hash', 'Mike', 'Wong', true); -- Blank User disabled
 
+-- INSERT ACCOUNT INFO FOR USERS
+INSERT INTO user_account_info (uid, height, weight, dateOfBirth)
+VALUES
+    (1, 175, 70, '1990-01-15'),
+    (2, 180, 75, '1995-05-20');
+
+-- INSERT GOALS FOR USERS
+INSERT INTO user_goals (uid, goals)
+VALUES
+    (1, '{"goals": [{"id": 1, "name": "Goal 1","value": "Do 10 Pushups","completed": true},{"id": 2, "name": "Goal 2","value": "Do 20 Situps","completed": false},{"id": 3, "name": "Goal 3","value": "Do 30 Jumping Jacks","completed": true}]}'),
+    (2, '{"goals": [{"id": 1, "name": "New Year Resolution", "value": "Go to the gym once a week for a month.", "completed": false}, {"id": 2, "name": "Fitness Milestone", "value": "Bench 140 pounds.", "completed": true}, {"id": 3, "name": "Personal Achievement", "value": "Reach 200 pounds.", "completed": false}]}');
+-- INSERT EXERCISES
 INSERT INTO exercise (name, info, link) 
 VALUES
     ('Barbell Close Grip Press', '{"steps": ["Steps :", "1.) Start by sitting up straight on the end of a flat bench with feet in front of you, while holding a weighted barbell on your knees.", "2.) Elevate the bar overhead and this will be your starting position.", "3.) Slowly lower the bar behind your head, until you feel a stretch, squeeze your triceps, and hold for a count.", "4.) Return back to the starting position."], "muscles": ["Triceps"]}', 'https://cdn.jefit.com/assets/img/exercises/gifs/1165.gif'),

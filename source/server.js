@@ -77,6 +77,17 @@ async function getUser(userID) {
     return await db.oneOrNone('SELECT * FROM fitness_user WHERE email = $1', [userID]);
   }
 }
+
+// get user goals
+async function getUserGoals(userID) {
+  return await db.oneOrNone('SELECT goals FROM user_goals WHERE uid = $1', [userID]);
+}
+
+// get user account info
+async function getUserAccountInfo(userID) {
+  return await db.oneOrNone('SELECT height, weight, dateofbirth FROM user_account_info WHERE uid = $1', [userID]);
+}
+
 // get user payment by id or email
 async function getUserPayment(userID) {
   return await db.oneOrNone('SELECT * FROM payment WHERE uid = $1', [userID]);
@@ -524,35 +535,56 @@ async function changePassword(id, password) {
 }
 
 async function updateAccount(accountInfo, userID) {
-
+  // object format {height: '5"10', weight: 160, dateOfBirth: '1999-12-12'}
   // insert object into db
-  let query = 'UPDATE fitness_user SET accountinfo = $1 WHERE id = $2';
   let result = false;
-  await db.none(query, [accountInfo, userID]).then(() => {
-    console.log('User account info updated successfully');
-    result = true;
-    return true;
-  })
-  .catch(error => {
-    console.log('Error updating User account info: ', error);
-    return false;
-  });
+  
+  let checkAccount = await db.oneOrNone('SELECT * FROM user_account_info WHERE uid = $1', [userID]);
+  let query = null;
+  if (checkAccount === null) {
+    // insert account
+    query = 'INSERT INTO user_account_info(uid, height, weight, dateofbirth) VALUES($1, $2, $3, CAST($4 AS DATE))';
+  } else {
+    // update account
+    query = 'UPDATE user_account_info SET height = $2, weight = $3, dateofbirth = CAST($4 AS DATE) WHERE uid = $1';
+  }
+
+  if (query !== null) {
+    await db.none(query, [userID, accountInfo.height, accountInfo.weight, accountInfo.dateofbirth]).then(() => {
+      console.log('User account inserted successfully');
+      result = true;
+      return true;
+    }).catch(error => {
+      console.log('Error inserting User account: ', error);
+      return false;
+    });
+  }
   return result;
 }
 
 async function updateGoals(goals, userID) {
-  // insert object into db
   let result = false;
-  let query = 'UPDATE fitness_user SET goals = $1 WHERE id = $2';
-  await db.none(query, [goals, userID]).then(() => {
-    console.log('User goals updated successfully');
-    result = true;
-    return true;
+  // insert if they dont have any goals
+  let checkGoals = await db.oneOrNone('SELECT goals FROM user_goals WHERE uid = $1', [userID]);
+  let query = null;
+  if (checkGoals === null) {
+    // insert goals
+    query = 'INSERT INTO user_goals(uid, goals) VALUES($1, $2)';
+  } else {
+    // update goals
+    query = 'UPDATE user_goals SET goals = $2 WHERE uid = $1';
   }
-  ).catch(error => {
-    console.log('Error updating User goals: ', error);
-    return false;
-  });
+
+  if (query !== null) {
+    await db.none(query, [userID, goals]).then(() => {
+      console.log('User goals inserted successfully');
+      result = true;
+      return true;
+    }).catch(error => {
+      console.log('Error inserting User goals: ', error);
+      return false;
+    });
+  }
   return result;
 }
 
@@ -599,6 +631,14 @@ app.get(['/', '/home'], async function (req, res) {
     res.send(pug.renderFile("./views/pages/adminDashboard.pug", { sessionUser: req.session.userID, users: users, tickets: tickets, transactions: transactions, uEvents: uEvents, pEvents: pEvents }));
   } else if (req.session.loggedin) {
     let user = await getUser(req.session.userID);
+    let goals = await getUserGoals(req.session.userID);
+    if (goals !== null) {
+      user.goals = goals.goals;
+    } else {
+      user.goals = null;
+    }
+    user.accountinfo = await getUserAccountInfo(req.session.userID);
+
     // check if user has setup account 
     if (user.accountinfo === null || user.goals === null) {
       res.send(pug.renderFile("./views/pages/accountSetup.pug", { user: user }));
@@ -797,6 +837,7 @@ app.get('/profile', async function (req, res) {
     return;
   } else if (req.session.loggedin) {
     let user = await getUser(req.session.userID);
+    user.accountinfo = await getUserAccountInfo(req.session.userID);
     let payment = await getUserPayment(req.session.userID);
     // check if user payment is expired
     let validPayment = true;
