@@ -23,6 +23,7 @@ function toggleUser(userId, toggle) {
             } else {
                 alert('User enabled successfully!');
             }
+            location.reload(true);
         })
         .catch(error => {
             alert('Error: User could not be disabled.');
@@ -31,7 +32,7 @@ function toggleUser(userId, toggle) {
 
 // Remove Ticket
 function completeTicket(ticketID) {
-    fetch(`/complete-ticket/${userId}`, {
+    fetch(`/complete-ticket/${ticketID}`, {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json"
@@ -46,6 +47,7 @@ function completeTicket(ticketID) {
         })
         .then(data => {
             alert('Ticket '+ticketID+': completed successfully!');
+            location.reload(true);
         })
         .catch(error => {
             alert('Ticket '+ticketID+': could not be completed.');
@@ -60,6 +62,7 @@ form0.addEventListener('submit', function (event) {
     console.log("attempt to post - new user")
 
     var data = getFormData(form0);
+    data.admin = document.getElementById("admin").checked;
     console.log(data);
     
     fetch('/create-user', {

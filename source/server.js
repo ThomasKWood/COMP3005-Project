@@ -1020,7 +1020,6 @@ app.post('/login', express.urlencoded({ extended: false }), async (req, res) => 
 // ADMIN CREATE USER
 app.post('/create-user', express.urlencoded({ extended: false }), async (req, res) => {
   let user = req.body;
-  user.admin = req.body.admin === 'true';
 
   // check if email exists
   let emailExists = await getEmailExists(user.email);
