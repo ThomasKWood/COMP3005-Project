@@ -19,6 +19,6 @@
         "pg-promise": "^10.4.3",
         "pug": "^3.0.2"
     },
-    "author": "Thomas Wood",
+    "author": "Thomas Wood, Kaif Ali",
     "license": "MIT"
 }

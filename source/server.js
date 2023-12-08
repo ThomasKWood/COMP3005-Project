@@ -2,6 +2,7 @@
  * COMP3005 Project Server
  * @version 1.0
  * @author Thomas Wood
+ * @author Kaif Ali
  * Responsible for handeling and rendering the pages of the fitness app.
 **/
 
@@ -315,7 +316,7 @@ async function addPayment(payment, userID) {
   } else {
     // no payment exists
     // check card is not expired first
-    if (curYear > expiryYear) {
+    if (curYear < expiryYear) {
       acceptUpdate = true;
     } else if (curYear === expiryYear) {
       if (curMonth > expiryMonth) {
