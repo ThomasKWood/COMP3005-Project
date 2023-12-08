@@ -29,7 +29,7 @@ CREATE TABLE fitness_user (
 
 CREATE TABLE user_account_info (
     uid INT PRIMARY KEY,
-    height INT,
+    height VARCHAR(255) NOT NULL,
     weight INT,
     dateOfBirth DATE,
     FOREIGN KEY (uid) REFERENCES fitness_user(id)

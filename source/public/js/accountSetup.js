@@ -116,6 +116,18 @@ async function addBoth() {
     });
     
     let accountinfo = {}; 
+    // convert weight into int
+    if (formData.weight != null) {
+        formData.weight = parseInt(formData.weight);
+        // was it successfully converted?
+        if (isNaN(formData.weight)) {
+            formData.weight = null;
+            alert("Weight must be a number");
+            location.reload(true);
+            return;
+        }
+    } 
+
     accountinfo.height = formData.height;   
     accountinfo.weight = formData.weight;
     accountinfo.dateoOfBirth = formData.dateOfBirth;

@@ -6,8 +6,7 @@
  * Responsible for handeling and rendering the pages of the fitness app.
 **/
 
-// TODO: Add routine table that is accoiated with some exercises
-
+// Setup and Imports
 var pug = require("pug");
 var express = require('express')
 var session = require('express-session')
@@ -42,19 +41,40 @@ app.use(session({
 }))
 
 // Functions
-// SQL Getters
+// SQL Getters:
+
+// Return all users
+/**
+ * Retrieves all users from the database.
+ * @returns {Promise<Array<Object>>} A promise that resolves to an array of user objects.
+ */
 async function getUsers() {
   return await db.any('SELECT id, email, fname, lname, admin, joinDate, points, disabled FROM fitness_user');
 }
 
+// Return all tickets
+/**
+ * Retrieves tickets from the database.
+ * @returns {Promise<Array<Object>>} A promise that resolves to an array of ticket objects.
+ */
 async function getTickets() {
   return await db.any('SELECT id, subject, description FROM ticket');
 }
 
+// Return all transactions
+/**
+ * Retrieves transactions from the database.
+ * @returns {Promise<Array<Object>>} A promise that resolves to an array of transaction objects.
+ */
 async function getTransactions() {
   return await db.any('SELECT t.id AS transaction_id, u.fname AS first_name, u.lname AS last_name, u.email as email, t.date, t.type, t.amount, t.points, t.paidbypoints, t.paid FROM user_transaction t JOIN fitness_user u ON t.uid = u.id');
 }
 
+/**
+ * Retrieves transactions for a user based on their ID or email.
+ * @param {number|string} userID - The ID or email of the user.
+ * @returns {Promise<Array<Object>>|null} - A promise that resolves to an array of transaction objects, or null if the parameter is invalid.
+ */
 async function getUserTransactions(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
@@ -69,6 +89,11 @@ async function getUserTransactions(userID) {
 }
 
 // get user by id or email
+/**
+ * Retrieves a user from the database based on the provided userID.
+ * @param {number|string} userID - The ID or email of the user.
+ * @returns {Promise<Object|null>} - A promise that resolves to the user object if found, or null if not found.
+ */
 async function getUser(userID) {
   if (typeof userID === 'number' && Number.isInteger(userID)) {
     // id lookup
