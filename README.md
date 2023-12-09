@@ -25,6 +25,10 @@ To set up and use this application, follow these steps:
 
 The submission is organized into 3 folders:
 
-1. [Documentation/](Documentation): This folder contains all of the documentation for the project.
-1. [source/](source): This folder contains all of the source code for the application.
-2. [SQL/](SQL): This folder contains the SQL code used to create the database and populate it with data.
+1. **[Documentation](Documentation)**: This folder contains all of the documentation for the project.
+    - *[Diagrams](Documentation/Diagrams)*: This folder contains all of the diagrams used in the documentation. 
+2. **[source](source)**: This folder contains all of the source code for the application.
+    - *[!SQLcreds.js](source/!SQLcreds.js)*: This file contains the credentials used to connect to the PostgreSQL database.
+    - *[public](source/public)*: This folder contains CSS and JavaScript files that are used to allow clients to communicate with the server side of the application.
+    - *[views](source/views)*: This folder contains the Pug files that are rendered by the server to be sent to the clients when requesting a page.
+3. **[SQL](SQL)**: This folder contains the SQL code used to create the database and populate it with data.
