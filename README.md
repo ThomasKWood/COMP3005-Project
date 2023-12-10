@@ -2,7 +2,7 @@
 **Course**: COMP3005 - Database Management Systems\
 **Assignment**: Project\
 **Due Date**: 2023-12-10\
-**Authors**: Thomas Wood, Kaif Ali
+**Authors**: Thomas Wood and Kaif Ali
 
 ## Demonstration Video
 [![Video_Title](https://img.youtube.com/vi/_mWCaebawkM/hqdefault.jpg)](https://www.youtube.com/watch?v=_mWCaebawkM "COMP3005 - Project Demo Video")\
@@ -20,6 +20,11 @@ To set up and use this application, follow these steps:
 5. **Provide SQL Credentials**: In the [!SQLcreds.js](source/!SQLcreds.js) file, provide a username and password with read and write access to your PostgreSQL database in lines 5 and 6 respectively. Here you can also change the port number and host address if necessary.
 6. **Install Dependencies**: In the [source/](source) directory, run the following command: `npm install`. This will install all of the dependencies required to run the application.
 7. **Run application**: In the [source/](source) directory, run the following command: `npm run start`. This will run the application.
+
+## Team Member Contributions
+
+- **Thomas Wood**: Code, DDL, Debugging, Assumptions & Requirements, README, Demonstration Video, Project Report
+- **Kaif Ali**: ER Model, Database Schema, 2NF & 3NF Normalization, DDL, Assumptions & Requirements
 
 ## Organization of the Submission
 
