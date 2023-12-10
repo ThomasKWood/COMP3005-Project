@@ -1,8 +1,8 @@
 /** 
  * COMP3005 Project Server
  * @version 1.0
- * @author Thomas Wood
- * @author Kaif Ali
+ * @author Thomas Wood (101192525)
+ * @author Kaif Ali (101180909)
  * Responsible for handeling and rendering the pages of the fitness app.
 **/
 
