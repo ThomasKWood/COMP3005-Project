@@ -2,7 +2,7 @@
 **Course**: COMP3005 - Database Management Systems\
 **Assignment**: Project\
 **Due Date**: 2023-12-10\
-**Authors**: Thomas Wood and Kaif Ali
+**Authors**: Thomas Wood (101192525) and Kaif Ali (101180909)
 
 ## Demonstration Video
 [![Video_Title](https://img.youtube.com/vi/_mWCaebawkM/hqdefault.jpg)](https://www.youtube.com/watch?v=_mWCaebawkM "COMP3005 - Project Demo Video")\
